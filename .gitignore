@@ -1,0 +1,30 @@
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+*.pem
+*.key
+
+# Local data
+data/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
