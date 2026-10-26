@@ -27,6 +27,52 @@ Each layer depends only on the one below it.
 | Ports and adapters | `app/providers/mail/`, `app/providers/llm/`, `app/db/` | Mail, LLM and persistence behind interfaces |
 | Cross-cutting | `app/domain/`, `app/core/` | Pydantic models, enums, settings from environment |
 
+## Data model
+
+PostgreSQL holds three tables. An email has at most one analysis and any number of drafts. Deleting an email deletes its analysis and drafts.
+
+```mermaid
+erDiagram
+    emails ||--o| analyses : has
+    emails ||--o{ drafts : has
+    emails {
+        string id PK
+        string sender
+        string subject
+        text body
+        timestamptz received_at
+        timestamptz created_at
+    }
+    analyses {
+        int id PK
+        string email_id FK
+        string category
+        string priority
+        text summary
+        bool needs_reply
+        text draft_reply
+        timestamptz created_at
+    }
+    drafts {
+        int id PK
+        string email_id FK
+        text body
+        string status
+        string gmail_draft_id
+        timestamptz created_at
+        timestamptz updated_at
+    }
+```
+
+Draft status values are `proposed`, `approved` and `discarded`.
+
+## Persistence
+
+- `app/db/models.py`: SQLAlchemy 2 table classes (`EmailRecord`, `AnalysisRecord`, `DraftRecord`).
+- `app/db/session.py`: one shared engine and session factory. `get_session()` yields a session and closes it afterwards.
+- `app/db/repositories.py`: `EmailRepository`, `AnalysisRepository` and `DraftRepository`. They take and return domain models (Pydantic), so services never touch tables or SQL. Repositories never commit: the calling service decides when to commit or roll back.
+- `migrations/`: Alembic migrations. Apply them with `uv run alembic upgrade head`.
+
 ## Design rules
 
 1. `MailProvider` has no send operation, and a test guarantees it.

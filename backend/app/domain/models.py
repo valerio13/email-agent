@@ -28,6 +28,8 @@ class DraftStatus(StrEnum):
 class Email(BaseModel):
     """A received email, as returned by a mail provider."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     sender: str
     subject: str
@@ -38,7 +40,7 @@ class Email(BaseModel):
 class EmailAnalysis(BaseModel):
     """Structured analysis of one email, as returned by the LLM."""
 
-    model_config = ConfigDict(str_strip_whitespace=True)
+    model_config = ConfigDict(str_strip_whitespace=True, from_attributes=True)
 
     category: Category = Field(description="Main category of the email.")
     priority: Priority = Field(description="How soon the email should be handled.")
@@ -60,3 +62,17 @@ class EmailAnalysis(BaseModel):
         if self.draft_reply and not self.needs_reply:
             raise ValueError("No draft reply is allowed when the email does not need a reply.")
         return self
+
+
+class Draft(BaseModel):
+    """A reply draft waiting for human review."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email_id: str
+    body: str
+    status: DraftStatus
+    gmail_draft_id: str | None = None
+    created_at: datetime
+    updated_at: datetime

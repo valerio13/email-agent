@@ -4,6 +4,9 @@ Reads new mail every day, writes a prioritized summary (urgent, needs a reply, i
 
 Status: work in progress.
 
+- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories).
+- Next: mail and LLM providers, services, API, scheduler, dashboard.
+
 ## Architecture
 
 See [docs/architecture.md](docs/architecture.md).
@@ -20,6 +23,7 @@ Requires Docker and [uv](https://docs.astral.sh/uv/).
 cp .env.example .env   # then fill in the values
 docker compose up -d db
 cd backend && uv sync
+uv run alembic upgrade head   # create the database tables
 ```
 
 ## Demo mode
