@@ -6,12 +6,13 @@ export const useDrafts = () => useQuery({ queryKey: ['drafts'], queryFn: api.dra
 export const useMetrics = () => useQuery({ queryKey: ['metrics'], queryFn: api.metrics })
 
 // Every action changes what the three views show, so each one refreshes all the queries and
-// finishes only when they have loaded again.
+// finishes only when they have loaded again. It also refreshes after a failure: a 404 or a 409
+// means the screen was out of date.
 function useAction<TData, TVariables = void>(action: (variables: TVariables) => Promise<TData>) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: action,
-    onSuccess: () => queryClient.invalidateQueries(),
+    onSettled: () => queryClient.invalidateQueries(),
   })
 }
 

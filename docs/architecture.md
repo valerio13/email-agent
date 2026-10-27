@@ -135,13 +135,20 @@ React single-page app in `frontend/`, built with Vite. It only talks to the REST
 ```
 src/
   api/         schema.d.ts (generated), client.ts (fetch wrapper, ApiError), hooks.ts (queries and actions)
-  views/       Overview (one view per tab; Drafts and Metrics come next)
-  components/  Card, Chip, Tile, Tabs, EmailRow, EmailCard, AiCard, SummaryCard, InboxCard, EmailDetail, EmptyState, Button, Icon, ThemeToggle
-  lib/         theme.ts (light or dark), format.ts (names and dates), categories.ts (labels and tones)
+  views/       Overview and Drafts (one view per tab; Metrics comes next)
+  components/  Card, Chip, Tile, Tabs, EmailRow, EmailCard, AiCard, DraftEditor, NoticeProvider, SummaryCard, InboxCard, EmailDetail, EmptyState, Button, Icon, ThemeToggle
+  lib/         theme.ts (light or dark), format.ts (names and dates), categories.ts (labels and tones), notice.ts (message shown after an action)
   styles/      tokens.css
 ```
 
 The Overview view holds the state (filter, search, selected email) and reads the digest. It shows the summary tiles, which double as filters, the inbox by priority and, beside it, two separate cards for the selected email: the email as it arrived, and the AI analysis with a purple mark so the reader always knows what the model produced. A day with no analysed emails, a loading digest and a failed request each get their own state.
+
+The Drafts view is the human review. It lists every pending draft, of any day, next to the email it answers, with the same AI card and editor as the Overview, and below them the drafts already decided. In both places the reviewer edits the text, approves or discards:
+
+- Edits are saved to the API when the text box loses focus (`PATCH /api/drafts/{id}`), so they survive choosing another email or reloading. Approving saves any unsaved change first.
+- Approving creates the draft in the mailbox and never sends. A short message under the tabs confirms what happened for seven seconds.
+- Every action refreshes all the queries, also after a failure. A 404 or 409 (for example a draft decided in another window) shows the API's message and brings the screen up to date.
+- A request that cannot reach the API shows "Could not reach the API." after one quick retry.
 
 `src/api/schema.d.ts` is generated from the API's OpenAPI description. With the API running, `npm run gen:api` regenerates it, and `tsc` then reports any place where the frontend no longer matches the backend. The generated file is committed, so building does not need the API.
 

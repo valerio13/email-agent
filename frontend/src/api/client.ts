@@ -37,9 +37,17 @@ async function errorMessage(response: Response): Promise<string> {
   return `Request failed (${response.status})`
 }
 
+const UNREACHABLE = 'Could not reach the API.'
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api${path}`, init)
-  if (!response.ok) throw new ApiError(response.status, await errorMessage(response))
+  const response = await fetch(`/api${path}`, init).catch(() => {
+    throw new ApiError(0, UNREACHABLE)
+  })
+  if (!response.ok) {
+    // The dev proxy and any reverse proxy answer 502 to 504 when the API is down.
+    const down = response.status >= 502 && response.status <= 504
+    throw new ApiError(response.status, down ? UNREACHABLE : await errorMessage(response))
+  }
   return response.json() as Promise<T>
 }
 

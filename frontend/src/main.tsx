@@ -4,7 +4,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-const queryClient = new QueryClient()
+// One quick retry, then show the error: the API is local, so a failure is rarely a blip.
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, retryDelay: 500 } },
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

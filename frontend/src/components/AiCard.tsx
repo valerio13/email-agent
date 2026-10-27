@@ -1,19 +1,14 @@
-import type { Draft, DigestItem } from '../api/client'
+import type { DigestItem } from '../api/client'
 import { CATEGORIES, PRIORITY_LABEL } from '../lib/categories'
-import { Card, SectionLabel, Well } from './Card'
+import { Card, SectionLabel } from './Card'
 import { Chip } from './Chip'
+import { DraftEditor } from './DraftEditor'
 import { Icon } from './Icon'
-
-function DraftState({ status }: { status: Draft['status'] }) {
-  if (status === 'approved') return <Chip variant="done" icon="check">Created in mailbox</Chip>
-  if (status === 'discarded') return <Chip variant="muted" icon="x">Discarded</Chip>
-  return <Chip variant="ready" icon="draft">Waiting for review</Chip>
-}
 
 // Everything the language model produced for one email. It sits apart from the email card so
 // the reader always knows which part is AI generated.
-export function AiCard({ item }: { item: DigestItem }) {
-  const { analysis, draft } = item
+export function AiCard({ item, big = false }: { item: DigestItem; big?: boolean }) {
+  const { email, analysis, draft } = item
   const category = CATEGORIES[analysis.category]
   return (
     <Card aria-label="AI analysis" className="grid content-start gap-5">
@@ -37,10 +32,7 @@ export function AiCard({ item }: { item: DigestItem }) {
         <p>{analysis.summary}</p>
       </div>
       {draft ? (
-        <div>
-          <SectionLabel title="Reply draft" aside={<DraftState status={draft.status} />} />
-          <Well className="whitespace-pre-wrap [overflow-wrap:anywhere]">{draft.body}</Well>
-        </div>
+        <DraftEditor key={draft.id} email={email} draft={draft} big={big} />
       ) : (
         <div className="flex items-center gap-2.5 rounded-[10px] bg-gray px-[18px] py-3 text-sm font-semibold">
           <Icon name="info" />
