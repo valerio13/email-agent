@@ -18,6 +18,7 @@ from app.services.analysis import AnalysisService
 from app.services.digest import DigestService
 from app.services.drafts import DraftService
 from app.services.ingest import IngestService
+from app.services.pipeline import PipelineService
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class Services:
 
     ingest: IngestService
     analysis: AnalysisService
+    pipeline: PipelineService
     digest: DigestService
     drafts: DraftService
 
@@ -56,13 +58,14 @@ def get_llm_provider() -> LLMProvider:
     return build_llm_provider(get_settings())
 
 
-def build_services(session: Session) -> Services:
-    """Build every service on top of one database session."""
-    mail = get_mail_provider()
-    llm = get_llm_provider()
+def build_services(session: Session, mail: MailProvider, llm: LLMProvider) -> Services:
+    """Build every service on top of one database session and the given providers."""
+    ingest = IngestService(session, mail)
+    analysis = AnalysisService(session, llm)
     return Services(
-        ingest=IngestService(session, mail),
-        analysis=AnalysisService(session, llm),
+        ingest=ingest,
+        analysis=analysis,
+        pipeline=PipelineService(ingest, analysis),
         digest=DigestService(session),
         drafts=DraftService(session, mail),
     )

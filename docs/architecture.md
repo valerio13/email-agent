@@ -96,8 +96,24 @@ Each service takes the database session and its providers through the constructo
 | `AnalysisService` | `run()` | Analyses every email without an analysis and creates a draft when a reply is needed. Each email has its own transaction: if the model fails on one, that email stays pending and is retried on the next run. |
 | `DigestService` | `build()` | Returns a `Digest`: total, counts per category, pending drafts and all analysed emails, highest priority first and newest first within each priority. |
 | `DraftService` | `list_pending()`, `edit()`, `approve()`, `discard()` | Approving creates the draft in the mailbox first and marks it approved afterwards, so a mailbox failure leaves the database unchanged. A draft that was already approved or discarded cannot change again. |
+| `PipelineService` | `run()` | The daily run: ingest, then analysis. Used by the scheduler and by the demo endpoint. |
 
-`app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. `build_services(session)` assembles the four services on one session.
+`app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. `build_services(session, mail, llm)` assembles the services on one session.
+
+## API
+
+FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted under `/api` by `app/api/router.py`. Routers only translate HTTP to service calls: they hold no business logic. Each request gets its own database session (`app/api/dependencies.py`). Interactive documentation is served at `/docs`.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/digest` | Totals, counts per category, pending drafts and every analysed email by priority |
+| `GET /api/drafts` | Drafts waiting for review |
+| `PATCH /api/drafts/{id}` | Edit the text of a pending draft |
+| `POST /api/drafts/{id}/approve` | Create the draft in the mailbox and mark it approved |
+| `POST /api/drafts/{id}/discard` | Discard a pending draft |
+| `POST /api/demo/run` | Run the pipeline on demand. Demo mode only (403 otherwise) |
+
+An unknown draft returns 404 and a draft that was already approved or discarded returns 409. The API has no authentication: it is meant for a single reviewer, locally or in a demo.
 
 ## Design rules
 

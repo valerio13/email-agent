@@ -2,7 +2,6 @@
 
 import pytest
 
-from app.core.config import Settings
 from app.domain.models import Category, DraftStatus, Email, EmailAnalysis, Priority
 from app.factory import build_llm_provider, build_mail_provider
 from app.providers.llm.fake import FakeLLMProvider
@@ -11,6 +10,7 @@ from app.services.analysis import AnalysisService
 from app.services.digest import DigestService
 from app.services.drafts import DraftNotFoundError, DraftNotPendingError, DraftService
 from app.services.ingest import IngestService
+from tests.helpers import make_settings
 
 
 class FailingOnceLLM(FakeLLMProvider):
@@ -23,16 +23,6 @@ class FailingOnceLLM(FakeLLMProvider):
         if email.id == self._failing_id:
             raise RuntimeError("model unavailable")
         return super().analyze_email(email)
-
-
-def make_settings(demo_mode: bool) -> Settings:
-    return Settings(
-        _env_file=None,
-        database_url="sqlite://",
-        llm_provider="fake",
-        llm_model="fake",
-        demo_mode=demo_mode,
-    )
 
 
 @pytest.fixture

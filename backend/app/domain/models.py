@@ -85,6 +85,13 @@ class DigestItem(BaseModel):
     analysis: EmailAnalysis
 
 
+class PipelineResult(BaseModel):
+    """What one run of the pipeline did."""
+
+    new_emails: int
+    analysed: int
+
+
 class Digest(BaseModel):
     """The prioritized summary shown at the top of the dashboard."""
 

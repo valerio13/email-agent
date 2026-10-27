@@ -4,8 +4,8 @@ Reads new mail every day, writes a prioritized summary (urgent, needs a reply, i
 
 Status: work in progress.
 
-- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services (ingest, analysis, digest, drafts) and the factory.
-- Next: API, scheduler, dashboard, then the Gmail and LangChain providers.
+- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory and the REST API.
+- Next: scheduler, dashboard, then the Gmail and LangChain providers.
 
 ## Architecture
 
@@ -24,11 +24,12 @@ cp .env.example .env   # then fill in the values
 docker compose up -d db
 cd backend && uv sync
 uv run alembic upgrade head   # create the database tables
+uv run fastapi dev            # API at http://127.0.0.1:8000, docs at /docs
 ```
 
 ## Demo mode
 
-Runs on fictitious emails and needs no mailbox credentials (`DEMO_MODE=true`).
+Runs on fictitious emails and needs no mailbox credentials (`DEMO_MODE=true`). Open `/docs` and call `POST /api/demo/run` to load and analyse the demo emails.
 
 ## Security
 
