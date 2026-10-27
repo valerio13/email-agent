@@ -115,6 +115,18 @@ FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted
 
 An unknown draft returns 404 and a draft that was already approved or discarded returns 409. The API has no authentication: it is meant for a single reviewer, locally or in a demo.
 
+## Scheduler
+
+`app/scheduler.py` registers one APScheduler job, `daily-pipeline`, that runs `PipelineService` (ingest, then analysis) every day. The scheduler runs in a background thread of the API process: `app/main.py` starts it on startup and stops it on shutdown. The job opens its own database session because there is no HTTP request.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `SCHEDULER_ENABLED` | `true` | Start the scheduler with the API |
+| `SCHEDULE_TIME` | `07:00` | Time of the daily run (`HH:MM`) |
+| `SCHEDULE_TIMEZONE` | `UTC` | IANA timezone of `SCHEDULE_TIME` |
+
+Jobs are kept in memory, so a run missed while the process was down is not replayed. Run the API with a single worker: with several, the job would run once per worker.
+
 ## Design rules
 
 1. `MailProvider` has no send operation, and a test guarantees it.

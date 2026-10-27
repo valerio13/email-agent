@@ -1,5 +1,6 @@
 """Application settings, read from environment variables and the project's .env file."""
 
+from datetime import time
 from functools import lru_cache
 from pathlib import Path
 
@@ -27,6 +28,9 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: SecretStr = SecretStr("")
     demo_mode: bool = True
+    scheduler_enabled: bool = True
+    schedule_time: time = time(7, 0)
+    schedule_timezone: str = "UTC"
 
 
 @lru_cache

@@ -18,10 +18,12 @@ def mail():
 
 
 @pytest.fixture
-def client(session, mail):
+def client(session, mail, monkeypatch):
     services = build_services(session, mail, FakeLLMProvider())
     app.dependency_overrides[get_services] = lambda: services
     app.dependency_overrides[get_settings] = lambda: make_settings(demo_mode=True)
+    # The app's startup reads the settings directly, so patch that call too (scheduler stays off).
+    monkeypatch.setattr("app.main.get_settings", lambda: make_settings(demo_mode=True))
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
