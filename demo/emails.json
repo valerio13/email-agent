@@ -4,76 +4,287 @@
     "sender": "Marcus Lee <marcus.lee@northwind.example.com>",
     "subject": "Production API is down",
     "body": "Our integration has been returning errors since 09:00. This is an outage affecting all our customers. Please call me as soon as you can.",
-    "received_at": "2026-10-26T09:14:00Z"
+    "days_ago": 0,
+    "time_utc": "09:14"
   },
   {
     "id": "demo-002",
     "sender": "Billing <billing@brightfield.example.com>",
     "subject": "Invoice 2041 is overdue",
     "body": "Invoice 2041 for 1,800 EUR is 15 days overdue. Please confirm when the payment will be sent.",
-    "received_at": "2026-10-26T08:40:00Z"
+    "days_ago": 0,
+    "time_utc": "08:40"
   },
   {
     "id": "demo-003",
     "sender": "Elena Torres <elena.torres@harborlegal.example.com>",
     "subject": "Contract signature needed by Friday",
     "body": "The service contract has a deadline this Friday. We need your signature to keep the start date.",
-    "received_at": "2026-10-25T16:05:00Z"
+    "days_ago": 1,
+    "time_utc": "16:05"
   },
   {
     "id": "demo-004",
     "sender": "Priya Nair <priya.nair@lumen.example.com>",
     "subject": "Quote for the Q4 website redesign",
     "body": "Hello, could you send us a quote for redesigning our website? We would like to start in November.",
-    "received_at": "2026-10-26T07:55:00Z"
+    "days_ago": 0,
+    "time_utc": "07:55"
   },
   {
     "id": "demo-005",
     "sender": "Tom Becker <tom.becker@orchard.example.com>",
     "subject": "Call next week",
     "body": "Are you free for a 30 minute call on Tuesday or Wednesday? I would like to go over the roadmap.",
-    "received_at": "2026-10-25T18:20:00Z"
+    "days_ago": 1,
+    "time_utc": "18:20"
   },
   {
     "id": "demo-006",
     "sender": "Sofia Alvarez <sofia.alvarez@kestrel.example.com>",
     "subject": "Onboarding for new teams",
     "body": "Hi, I have a question about how onboarding works for new teams. Can you share the steps?",
-    "received_at": "2026-10-26T06:30:00Z"
+    "days_ago": 0,
+    "time_utc": "06:30"
   },
   {
     "id": "demo-007",
     "sender": "Daniel Kim <daniel.kim@solstice.example.com>",
     "subject": "Feedback on the draft proposal",
     "body": "Please review the proposal I sent on Monday and tell me what you think.",
-    "received_at": "2026-10-24T14:10:00Z"
+    "days_ago": 2,
+    "time_utc": "14:10"
   },
   {
     "id": "demo-008",
     "sender": "Product Weekly <news@productweekly.example.com>",
     "subject": "Your weekly product newsletter",
     "body": "This week we shipped three new features and published a guide to better reporting. Read more on our blog.",
-    "received_at": "2026-10-26T05:00:00Z"
+    "days_ago": 0,
+    "time_utc": "05:00"
   },
   {
     "id": "demo-009",
     "sender": "Shop Notifications <orders@papertrail.example.com>",
     "subject": "Your order 88231 has shipped",
     "body": "Your order has shipped and will arrive in 3 to 5 days. You can track it from your account.",
-    "received_at": "2026-10-25T12:45:00Z"
+    "days_ago": 1,
+    "time_utc": "12:45"
   },
   {
     "id": "demo-010",
     "sender": "Cloudbox <receipts@cloudbox.example.com>",
     "subject": "Receipt for your payment",
     "body": "Thanks for your payment of 24 EUR. Your receipt is attached to this email.",
-    "received_at": "2026-10-24T09:00:00Z"
+    "days_ago": 2,
+    "time_utc": "09:00"
   },
   {
     "id": "demo-011",
     "sender": "Hosting Team <status@hostco.example.com>",
     "subject": "Maintenance window on Sunday",
     "body": "We will run scheduled maintenance on Sunday between 02:00 and 03:00 UTC. No action is needed on your side.",
-    "received_at": "2026-10-23T15:30:00Z"
+    "days_ago": 3,
+    "time_utc": "15:30"
+  },
+  {
+    "id": "demo-012",
+    "sender": "Rachel Adams <rachel.adams@fernhill.example.com>",
+    "subject": "Contract amount to double check",
+    "body": "The contract draft shows 12,000 EUR instead of 21,000 EUR. Can you check which amount is right?",
+    "days_ago": 0,
+    "time_utc": "10:20"
+  },
+  {
+    "id": "demo-013",
+    "sender": "Cloudbox <usage@cloudbox.example.com>",
+    "subject": "Your monthly usage report",
+    "body": "Your workspace used 82 percent of its storage this month. The full usage report is available in your account.",
+    "days_ago": 0,
+    "time_utc": "07:10"
+  },
+  {
+    "id": "demo-014",
+    "sender": "Hosting Team <status@hostco.example.com>",
+    "subject": "Certificate renewed",
+    "body": "Your SSL certificate was renewed automatically and is valid for another 12 months.",
+    "days_ago": 0,
+    "time_utc": "04:15"
+  },
+  {
+    "id": "demo-015",
+    "sender": "Marta Gil <marta.gil@vertex.example.com>",
+    "subject": "Question about the maintenance plan",
+    "body": "Hi, can you explain what is included in the monthly maintenance plan?",
+    "days_ago": 1,
+    "time_utc": "14:50"
+  },
+  {
+    "id": "demo-016",
+    "sender": "Henrik Berg <henrik.berg@aurora.example.com>",
+    "subject": "Payment failed on our side",
+    "body": "Our payment of 3,200 EUR failed because of a bank error. We need to fix this asap to avoid a service pause.",
+    "days_ago": 2,
+    "time_utc": "11:25"
+  },
+  {
+    "id": "demo-017",
+    "sender": "Nina Rossi <nina.rossi@oakridge.example.com>",
+    "subject": "Meeting notes and next steps",
+    "body": "Thanks for the call yesterday. Could you confirm the next steps by Friday?",
+    "days_ago": 2,
+    "time_utc": "16:40"
+  },
+  {
+    "id": "demo-018",
+    "sender": "Design Digest <hello@designdigest.example.com>",
+    "subject": "Five layout trends for 2027",
+    "body": "Our new article looks at five layout trends for next year. Read the full piece on our site.",
+    "days_ago": 2,
+    "time_utc": "07:15"
+  },
+  {
+    "id": "demo-019",
+    "sender": "Carlos Mena <carlos.mena@tidewater.example.com>",
+    "subject": "Outage on the staging server",
+    "body": "The staging server has been down since this morning and the team cannot test the release. This needs to be fixed today.",
+    "days_ago": 3,
+    "time_utc": "09:50"
+  },
+  {
+    "id": "demo-020",
+    "sender": "Olivia Grant <olivia.grant@beacon.example.com>",
+    "subject": "Quote for the monthly reporting service",
+    "body": "We are interested in a monthly reporting service for three teams. Could you send us a quote and the options?",
+    "days_ago": 3,
+    "time_utc": "11:05"
+  },
+  {
+    "id": "demo-021",
+    "sender": "Orchard Bank <alerts@orchardbank.example.com>",
+    "subject": "Your weekly account summary",
+    "body": "Your weekly account summary is available in your online account. No action is required.",
+    "days_ago": 3,
+    "time_utc": "06:45"
+  },
+  {
+    "id": "demo-022",
+    "sender": "Priya Nair <priya.nair@lumen.example.com>",
+    "subject": "Deadline moved to Thursday",
+    "body": "The client moved the launch deadline to Thursday. We need to adjust the plan today.",
+    "days_ago": 4,
+    "time_utc": "08:35"
+  },
+  {
+    "id": "demo-023",
+    "sender": "Tom Becker <tom.becker@orchard.example.com>",
+    "subject": "Intro to the new partner",
+    "body": "I would like to introduce you to our new partner. Are you open to a short intro this week?",
+    "days_ago": 4,
+    "time_utc": "10:10"
+  },
+  {
+    "id": "demo-024",
+    "sender": "Sofia Alvarez <sofia.alvarez@kestrel.example.com>",
+    "subject": "Access for two new users",
+    "body": "Please add two new users to our workspace. Their names are in the attached list.",
+    "days_ago": 4,
+    "time_utc": "12:30"
+  },
+  {
+    "id": "demo-025",
+    "sender": "Product Weekly <news@productweekly.example.com>",
+    "subject": "Your weekly product newsletter",
+    "body": "This week we covered pricing pages and a short guide to user interviews. Read more on our blog.",
+    "days_ago": 4,
+    "time_utc": "05:00"
+  },
+  {
+    "id": "demo-026",
+    "sender": "Shop Notifications <orders@papertrail.example.com>",
+    "subject": "Your order 87990 was delivered",
+    "body": "Your order was delivered today. We hope you enjoy it.",
+    "days_ago": 4,
+    "time_utc": "15:45"
+  },
+  {
+    "id": "demo-027",
+    "sender": "Cloudbox <receipts@cloudbox.example.com>",
+    "subject": "Receipt for your annual plan",
+    "body": "Thanks for your payment of 240 EUR. Your receipt is attached to this email.",
+    "days_ago": 4,
+    "time_utc": "09:20"
+  },
+  {
+    "id": "demo-028",
+    "sender": "Billing <billing@brightfield.example.com>",
+    "subject": "Invoice 2038 is overdue",
+    "body": "Invoice 2038 for 950 EUR is 30 days overdue. Please confirm the payment date.",
+    "days_ago": 5,
+    "time_utc": "09:05"
+  },
+  {
+    "id": "demo-029",
+    "sender": "Daniel Kim <daniel.kim@solstice.example.com>",
+    "subject": "Draft proposal for review",
+    "body": "I am sending the draft proposal for the new project. Could you review it and share your thoughts?",
+    "days_ago": 5,
+    "time_utc": "13:15"
+  },
+  {
+    "id": "demo-030",
+    "sender": "Elena Torres <elena.torres@harborlegal.example.com>",
+    "subject": "Review of the service contract",
+    "body": "Attached is the first version of the service contract. Can you check the payment terms?",
+    "days_ago": 5,
+    "time_utc": "15:00"
+  },
+  {
+    "id": "demo-031",
+    "sender": "Hosting Team <status@hostco.example.com>",
+    "subject": "Maintenance completed",
+    "body": "The scheduled maintenance finished without issues. All services are running normally.",
+    "days_ago": 5,
+    "time_utc": "03:30"
+  },
+  {
+    "id": "demo-032",
+    "sender": "Design Digest <hello@designdigest.example.com>",
+    "subject": "New templates added this month",
+    "body": "We added twelve new templates to the library. You can browse them from your account.",
+    "days_ago": 5,
+    "time_utc": "08:00"
+  },
+  {
+    "id": "demo-033",
+    "sender": "Marcus Lee <marcus.lee@northwind.example.com>",
+    "subject": "Integration setup",
+    "body": "We would like to connect our system to your API. Can you share the documentation?",
+    "days_ago": 6,
+    "time_utc": "10:45"
+  },
+  {
+    "id": "demo-034",
+    "sender": "Priya Nair <priya.nair@lumen.example.com>",
+    "subject": "Scope of the website redesign",
+    "body": "Before we start, could you clarify what is included in the scope?",
+    "days_ago": 6,
+    "time_utc": "14:20"
+  },
+  {
+    "id": "demo-035",
+    "sender": "Shop Notifications <orders@papertrail.example.com>",
+    "subject": "Your order 87412 has shipped",
+    "body": "Your order has shipped and will arrive in 2 to 4 days. You can track it from your account.",
+    "days_ago": 6,
+    "time_utc": "11:30"
+  },
+  {
+    "id": "demo-036",
+    "sender": "Product Weekly <news@productweekly.example.com>",
+    "subject": "A guide to better onboarding",
+    "body": "This issue covers onboarding flows that keep new users engaged. Read more on our blog.",
+    "days_ago": 6,
+    "time_utc": "06:00"
   }
 ]

@@ -1,4 +1,4 @@
-"""Demo endpoint: runs the pipeline on demand. Only available in demo mode."""
+"""Demo endpoints: load or reset the demo data on demand. Only available in demo mode."""
 
 from fastapi import APIRouter, Depends
 
@@ -9,6 +9,12 @@ router = APIRouter(prefix="/demo", tags=["demo"], dependencies=[Depends(require_
 
 
 @router.post("/run")
-def run_pipeline(services: ServicesDep) -> PipelineResult:
-    """Fetch the demo emails and analyse them. Running it twice does nothing the second time."""
-    return services.pipeline.run()
+def run_demo(services: ServicesDep) -> PipelineResult:
+    """Fetch the demo emails and analyse them. A second run on the same day does nothing."""
+    return services.demo.run()
+
+
+@router.post("/reset")
+def reset_demo(services: ServicesDep) -> PipelineResult:
+    """Delete all the data and load the demo emails again, dated relative to today."""
+    return services.demo.reset()

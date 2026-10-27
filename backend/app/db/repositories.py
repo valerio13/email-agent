@@ -3,7 +3,9 @@
 Repositories never commit. The caller (a service) decides when to commit or roll back.
 """
 
-from sqlalchemy import select
+from datetime import datetime
+
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.models import AnalysisRecord, DraftRecord, EmailRecord
@@ -36,6 +38,18 @@ class EmailRepository:
             select(EmailRecord).where(~EmailRecord.analysis.has()).order_by(EmailRecord.received_at)
         )
         return [Email.model_validate(record) for record in self._session.scalars(stmt)]
+
+    def latest_received_at(self) -> datetime | None:
+        """Return when the newest stored email was received, or None if there are none."""
+        return self._session.scalar(select(func.max(EmailRecord.received_at)))
+
+    def delete_all(self) -> None:
+        """Delete every email together with its analysis and drafts."""
+        # Children first, so it also works on databases that do not enforce foreign keys.
+        self._session.execute(delete(DraftRecord))
+        self._session.execute(delete(AnalysisRecord))
+        self._session.execute(delete(EmailRecord))
+        self._session.flush()
 
 
 class AnalysisRepository:
@@ -91,6 +105,33 @@ class DraftRepository:
             select(DraftRecord).where(DraftRecord.status == status).order_by(DraftRecord.created_at)
         )
         return [Draft.model_validate(record) for record in self._session.scalars(stmt)]
+
+    def list_with_context(self, status: DraftStatus) -> list[tuple[Draft, Email, EmailAnalysis]]:
+        """Return the drafts in this status, each with its email and analysis, oldest first."""
+        stmt = (
+            select(DraftRecord)
+            .where(DraftRecord.status == status)
+            .order_by(DraftRecord.created_at, DraftRecord.id)
+            .options(joinedload(DraftRecord.email).joinedload(EmailRecord.analysis))
+        )
+        return [
+            (
+                Draft.model_validate(record),
+                Email.model_validate(record.email),
+                EmailAnalysis.model_validate(record.email.analysis),
+            )
+            for record in self._session.scalars(stmt)
+        ]
+
+    def latest_for_emails(self, email_ids: list[str]) -> dict[str, Draft]:
+        """Return the newest draft of each of these emails. Emails without a draft are left out."""
+        stmt = (
+            select(DraftRecord).where(DraftRecord.email_id.in_(email_ids)).order_by(DraftRecord.id)
+        )
+        # Drafts come oldest first, so for an email with several the newest one wins.
+        return {
+            record.email_id: Draft.model_validate(record) for record in self._session.scalars(stmt)
+        }
 
     def update_body(self, draft_id: int, body: str) -> Draft | None:
         """Replace the text of a draft. Return the updated draft, or None if it does not exist."""

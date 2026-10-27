@@ -23,7 +23,7 @@ Each layer depends only on the one below it.
 | Layer | Folder | Responsibility |
 |---|---|---|
 | Entry points | `app/scheduler.py`, `app/api/` | Scheduled run and REST API |
-| Services | `app/services/` | Ingest, analysis, daily digest, drafts |
+| Services | `app/services/` | Ingest, analysis, daily digest, drafts, metrics, demo data |
 | Ports and adapters | `app/providers/mail/`, `app/providers/llm/`, `app/db/` | Mail, LLM and persistence behind interfaces |
 | Cross-cutting | `app/domain/`, `app/core/` | Pydantic models, enums, settings from environment |
 
@@ -71,6 +71,7 @@ Draft status values are `proposed`, `approved` and `discarded`.
 - `app/db/models.py`: SQLAlchemy 2 table classes (`EmailRecord`, `AnalysisRecord`, `DraftRecord`).
 - `app/db/session.py`: one shared engine and session factory. `get_session()` yields a session and closes it afterwards.
 - `app/db/repositories.py`: `EmailRepository`, `AnalysisRepository` and `DraftRepository`. They take and return domain models (Pydantic), so services never touch tables or SQL. Repositories never commit: the calling service decides when to commit or roll back.
+- `app/core/dates.py`: `utc_day()`, the UTC calendar day of a datetime. SQLite returns naive datetimes and PostgreSQL timezone-aware ones, so every service that groups by day goes through it.
 - `migrations/`: Alembic migrations. Apply them with `uv run alembic upgrade head`.
 
 ## Providers
@@ -79,12 +80,12 @@ Mail and LLM access sit behind two small interfaces, so the rest of the app neve
 
 | Interface | Operations | Implementations |
 |---|---|---|
-| `MailProvider` | `fetch_new()`, `create_draft(email, body)` | `DemoMailProvider` (reads `demo/emails.json`, keeps drafts in memory) |
+| `MailProvider` | `fetch_new()`, `create_draft(email, body)` | `DemoMailProvider` (reads `demo/emails.json`, dates them relative to now, keeps drafts in memory) |
 | `LLMProvider` | `analyze_email(email)` returns a validated `EmailAnalysis` | `FakeLLMProvider` (keyword rules, no API key) |
 
 `MailProvider` has no send operation. The Gmail and LangChain implementations will implement the same interfaces.
 
-`demo/emails.json` holds 11 fictitious emails (3 urgent, 4 needing a reply, 4 informational) used by demo mode and the tests.
+`demo/emails.json` holds 36 fictitious emails spread over 7 days (7 urgent, 14 needing a reply, 15 informational), used by demo mode and the tests. Instead of a date, each entry has `days_ago` and `time_utc`. `DemoMailProvider` turns them into real dates every time it fetches, so the demo never looks stale. An email whose time has not come yet today is moved to the day before, so no email comes from the future. Tests pass a fixed `now`.
 
 ## Services
 
@@ -94,9 +95,11 @@ Each service takes the database session and its providers through the constructo
 |---|---|---|
 | `IngestService` | `run()` | Stores the emails the database does not have yet and returns how many were new. |
 | `AnalysisService` | `run()` | Analyses every email without an analysis and creates a draft when a reply is needed. Each email has its own transaction: if the model fails on one, that email stays pending and is retried on the next run. |
-| `DigestService` | `build()` | Returns a `Digest`: total, counts per category, pending drafts and all analysed emails, highest priority first and newest first within each priority. |
-| `DraftService` | `list_pending()`, `edit()`, `approve()`, `discard()` | Approving creates the draft in the mailbox first and marks it approved afterwards, so a mailbox failure leaves the database unchanged. A draft that was already approved or discarded cannot change again. |
-| `PipelineService` | `run()` | The daily run: ingest, then analysis. Used by the scheduler and by the demo endpoint. |
+| `DigestService` | `build()` | Returns a `Digest` of the latest day of mail (`day`): total, counts per category, pending drafts (all days) and that day's emails, each with its draft if it has one, highest priority first and newest first within each priority. |
+| `DraftService` | `list_pending()`, `edit()`, `approve()`, `discard()` | `list_pending()` returns the drafts waiting for review of every day, each with its email and analysis, most urgent first. Approving creates the draft in the mailbox first and marks it approved afterwards, so a mailbox failure leaves the database unchanged. A draft that was already approved or discarded cannot change again. |
+| `MetricsService` | `build()` | Returns `Metrics` for the 7 days that end on the day of the newest email: emails per day, emails processed, drafts created, drafts waiting for review and the estimated time saved (2 minutes per email and 6 per draft, both returned in the response). |
+| `PipelineService` | `run()` | The daily run: ingest, then analysis. Used by the scheduler and by the demo service. |
+| `DemoService` | `run()`, `reset()` | Demo mode only. `run()` runs the pipeline, but first starts over if the mailbox now offers mail from a later day than the stored one, so the dashboard always shows current dates. `reset()` deletes every email, analysis and draft and loads the demo emails again. |
 
 `app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. `build_services(session, mail, llm)` assembles the services on one session.
 
@@ -106,12 +109,14 @@ FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/digest` | Totals, counts per category, pending drafts and every analysed email by priority |
-| `GET /api/drafts` | Drafts waiting for review |
+| `GET /api/digest` | The latest day of mail: totals, counts per category, pending drafts and the day's emails by priority, each with its draft |
+| `GET /api/drafts` | Drafts waiting for review, each with its email and analysis, most urgent first |
+| `GET /api/metrics` | Emails per day for the last 7 days, drafts created, drafts waiting and estimated time saved |
 | `PATCH /api/drafts/{id}` | Edit the text of a pending draft |
 | `POST /api/drafts/{id}/approve` | Create the draft in the mailbox and mark it approved |
 | `POST /api/drafts/{id}/discard` | Discard a pending draft |
-| `POST /api/demo/run` | Run the pipeline on demand. Demo mode only (403 otherwise) |
+| `POST /api/demo/run` | Run the pipeline on demand, reloading the demo emails if they are from an earlier day. Demo mode only (403 otherwise) |
+| `POST /api/demo/reset` | Delete all data and load the demo emails again. Demo mode only (403 otherwise) |
 
 An unknown draft returns 404 and a draft that was already approved or discarded returns 409. The API has no authentication: it is meant for a single reviewer, locally or in a demo.
 

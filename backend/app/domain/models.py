@@ -1,6 +1,6 @@
 """Domain models shared by every layer: enums, the received email and its analysis."""
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Self
 
@@ -79,10 +79,11 @@ class Draft(BaseModel):
 
 
 class DigestItem(BaseModel):
-    """One line of the digest: an email together with its analysis."""
+    """One line of the digest: an email with its analysis and its reply draft, if it has one."""
 
     email: Email
     analysis: EmailAnalysis
+    draft: Draft | None = None
 
 
 class PipelineResult(BaseModel):
@@ -93,9 +94,33 @@ class PipelineResult(BaseModel):
 
 
 class Digest(BaseModel):
-    """The prioritized summary shown at the top of the dashboard."""
+    """The prioritized summary of one day of mail, shown at the top of the dashboard."""
 
+    # The UTC day the digest covers. None when there is no analysed email yet.
+    day: date | None
     total: int
     counts: dict[Category, int]
+    # Drafts waiting for review, whatever day their email came from.
     pending_drafts: int
     items: list[DigestItem]
+
+
+class DailyCount(BaseModel):
+    """How many emails arrived on one day."""
+
+    day: date
+    emails: int
+
+
+class Metrics(BaseModel):
+    """What the agent did over the last seven days of mail, with an estimate of the time saved."""
+
+    # One entry per day, oldest first, ending on the day of the newest email. Empty without mail.
+    days: list[DailyCount]
+    emails_processed: int
+    drafts_created: int
+    # Drafts waiting for review, whatever day their email came from.
+    waiting_for_review: int
+    minutes_saved: int
+    minutes_per_email: int
+    minutes_per_draft: int

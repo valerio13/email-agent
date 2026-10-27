@@ -15,9 +15,11 @@ from app.providers.llm.fake import FakeLLMProvider
 from app.providers.mail.base import MailProvider
 from app.providers.mail.demo import DemoMailProvider
 from app.services.analysis import AnalysisService
+from app.services.demo import DemoService
 from app.services.digest import DigestService
 from app.services.drafts import DraftService
 from app.services.ingest import IngestService
+from app.services.metrics import MetricsService
 from app.services.pipeline import PipelineService
 
 
@@ -30,6 +32,8 @@ class Services:
     pipeline: PipelineService
     digest: DigestService
     drafts: DraftService
+    metrics: MetricsService
+    demo: DemoService
 
 
 def build_mail_provider(settings: Settings) -> MailProvider:
@@ -62,10 +66,13 @@ def build_services(session: Session, mail: MailProvider, llm: LLMProvider) -> Se
     """Build every service on top of one database session and the given providers."""
     ingest = IngestService(session, mail)
     analysis = AnalysisService(session, llm)
+    pipeline = PipelineService(ingest, analysis)
     return Services(
         ingest=ingest,
         analysis=analysis,
-        pipeline=PipelineService(ingest, analysis),
+        pipeline=pipeline,
         digest=DigestService(session),
         drafts=DraftService(session, mail),
+        metrics=MetricsService(session),
+        demo=DemoService(session, mail, pipeline),
     )

@@ -1,6 +1,7 @@
 """Tests for the mail and LLM providers used in demo mode and in tests."""
 
 import inspect
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -8,11 +9,12 @@ from app.domain.models import Category, Priority
 from app.providers.llm.fake import FakeLLMProvider
 from app.providers.mail.base import MailProvider
 from app.providers.mail.demo import DemoMailProvider
+from tests.helpers import DEMO_NOW
 
 
 @pytest.fixture
 def emails():
-    return DemoMailProvider().fetch_new()
+    return DemoMailProvider(now=DEMO_NOW).fetch_new()
 
 
 def public_method_names(cls: type) -> list[str]:
@@ -27,8 +29,27 @@ def test_mail_providers_cannot_send_email(cls):
 
 
 def test_demo_provider_returns_unique_valid_emails(emails):
-    assert len(emails) == 11
+    assert len(emails) == 36
     assert len({email.id for email in emails}) == len(emails)
+
+
+def test_demo_dates_are_relative_to_now(emails):
+    by_id = {email.id: email for email in emails}
+    assert by_id["demo-001"].received_at == datetime(2026, 10, 26, 9, 14, tzinfo=UTC)
+    assert by_id["demo-011"].received_at == datetime(2026, 10, 23, 15, 30, tzinfo=UTC)
+    # A week later, the same file gives dates a week later.
+    later = DemoMailProvider(now=DEMO_NOW + timedelta(days=7)).fetch_new()
+    assert later[0].received_at == datetime(2026, 11, 2, 9, 14, tzinfo=UTC)
+
+
+def test_demo_emails_cover_seven_days(emails):
+    assert len({email.received_at.date() for email in emails}) == 7
+
+
+def test_demo_emails_are_never_from_the_future():
+    early = datetime(2026, 10, 26, 3, 0, tzinfo=UTC)
+    emails = DemoMailProvider(now=early).fetch_new()
+    assert all(email.received_at <= early for email in emails)
 
 
 def test_demo_provider_keeps_created_drafts(emails):
@@ -40,9 +61,9 @@ def test_demo_provider_keeps_created_drafts(emails):
 def test_fake_llm_classifies_every_demo_email(emails):
     llm = FakeLLMProvider()
     categories = [llm.analyze_email(email).category for email in emails]
-    assert categories.count(Category.URGENT) == 3
-    assert categories.count(Category.NEEDS_REPLY) == 4
-    assert categories.count(Category.INFORMATIONAL) == 4
+    assert categories.count(Category.URGENT) == 7
+    assert categories.count(Category.NEEDS_REPLY) == 14
+    assert categories.count(Category.INFORMATIONAL) == 15
 
 
 def test_fake_llm_urgent_email_gets_high_priority_and_a_draft(emails):

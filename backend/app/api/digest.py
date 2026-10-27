@@ -10,5 +10,5 @@ router = APIRouter(prefix="/digest", tags=["digest"])
 
 @router.get("")
 def get_digest(services: ServicesDep) -> Digest:
-    """Totals, counts per category, pending drafts and every analysed email by priority."""
+    """Totals, counts per category, pending drafts and the emails of the latest day by priority."""
     return services.digest.build()

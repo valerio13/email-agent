@@ -30,5 +30,5 @@ def test_daily_job_is_registered_at_the_configured_local_time(session):
 def test_scheduled_run_ingests_and_analyses_once(session):
     factory = sessionmaker(bind=session.get_bind())
     mail, llm = DemoMailProvider(), FakeLLMProvider()
-    assert run_pipeline(factory, mail, llm) == PipelineResult(new_emails=11, analysed=11)
+    assert run_pipeline(factory, mail, llm) == PipelineResult(new_emails=36, analysed=36)
     assert run_pipeline(factory, mail, llm) == PipelineResult(new_emails=0, analysed=0)

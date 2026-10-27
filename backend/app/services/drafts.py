@@ -3,8 +3,9 @@
 from sqlalchemy.orm import Session
 
 from app.db.repositories import DraftRepository, EmailRepository
-from app.domain.models import Draft, DraftStatus
+from app.domain.models import DigestItem, Draft, DraftStatus
 from app.providers.mail.base import MailProvider
+from app.services.digest import sort_for_review
 
 
 class DraftNotFoundError(Exception):
@@ -24,9 +25,14 @@ class DraftService:
         self._emails = EmailRepository(session)
         self._drafts = DraftRepository(session)
 
-    def list_pending(self) -> list[Draft]:
-        """Return the drafts waiting for review, oldest first."""
-        return self._drafts.list_by_status(DraftStatus.PROPOSED)
+    def list_pending(self) -> list[DigestItem]:
+        """Return the drafts waiting for review with their email and analysis, most urgent first."""
+        return sort_for_review(
+            [
+                DigestItem(email=email, analysis=analysis, draft=draft)
+                for draft, email, analysis in self._drafts.list_with_context(DraftStatus.PROPOSED)
+            ]
+        )
 
     def edit(self, draft_id: int, body: str) -> Draft:
         """Replace the text of a pending draft."""

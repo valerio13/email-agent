@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.dependencies import ServicesDep
-from app.domain.models import Draft
+from app.domain.models import DigestItem, Draft
 
 router = APIRouter(prefix="/drafts", tags=["drafts"])
 
@@ -18,8 +18,8 @@ class DraftUpdate(BaseModel):
 
 
 @router.get("")
-def list_pending_drafts(services: ServicesDep) -> list[Draft]:
-    """Drafts waiting for review, oldest first."""
+def list_pending_drafts(services: ServicesDep) -> list[DigestItem]:
+    """Drafts waiting for review, each with its email and analysis, most urgent first."""
     return services.drafts.list_pending()
 
 
