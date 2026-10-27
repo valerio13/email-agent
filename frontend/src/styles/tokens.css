@@ -103,6 +103,8 @@
   --color-on-rose: var(--on-rose);
   --color-ai: var(--ai);
   --color-on-ai: var(--on-ai);
+  --color-ring: var(--ring);
+  --color-glow: var(--glow);
   --shadow-raise-1: var(--raise-1);
   --shadow-raise-2: var(--raise-2);
   --shadow-press: var(--press);

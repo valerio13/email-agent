@@ -1,31 +1,15 @@
+import { useState } from 'react'
 import { useDigest } from './api/hooks'
+import { EmptyState } from './components/EmptyState'
 import { Icon } from './components/Icon'
+import { type TabId, Tabs } from './components/Tabs'
 import { ThemeToggle } from './components/ThemeToggle'
-
-// Placeholder that proves the chain works (proxy, API client, types, tokens). The Overview view
-// replaces it in the next step.
-function ConnectionCard() {
-  const { data, error, isPending } = useDigest()
-  let message = 'Loading the digest...'
-  if (error) message = `Could not reach the API: ${error.message}`
-  else if (data) {
-    message = data.day
-      ? `${data.total} emails on ${data.day}, ${data.pending_drafts} drafts waiting for review.`
-      : 'The API is reachable but has no emails yet.'
-  }
-  return (
-    <section
-      className="min-w-0 rounded-card bg-bg p-7 shadow-raise-2"
-      aria-busy={isPending}
-      role="status"
-    >
-      <h3>API connection</h3>
-      <p className="mt-1 text-fg-muted">{message}</p>
-    </section>
-  )
-}
+import { Overview } from './views/Overview'
 
 export default function App() {
+  const [tab, setTab] = useState<TabId>('overview')
+  const { data: digest } = useDigest()
+
   return (
     <div className="mx-auto grid max-w-[1240px] gap-7 pt-7 pr-[max(16px,env(safe-area-inset-right,0px))] pb-14 pl-[max(16px,env(safe-area-inset-left,0px))]">
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
@@ -42,7 +26,16 @@ export default function App() {
         </div>
         <ThemeToggle />
       </header>
-      <ConnectionCard />
+      <Tabs tab={tab} onChange={setTab} draftCount={digest?.pending_drafts ?? 0} />
+      <div role="tabpanel" aria-labelledby={`tab-${tab}`} className="grid gap-7">
+        {tab === 'overview' && <Overview onOpenDrafts={() => setTab('drafts')} />}
+        {/* The Drafts and Metrics views arrive in the next steps. */}
+        {tab !== 'overview' && (
+          <EmptyState icon="refresh" title="Coming soon">
+            This section is built in a later step.
+          </EmptyState>
+        )}
+      </div>
     </div>
   )
 }

@@ -135,10 +135,13 @@ React single-page app in `frontend/`, built with Vite. It only talks to the REST
 ```
 src/
   api/         schema.d.ts (generated), client.ts (fetch wrapper, ApiError), hooks.ts (queries and actions)
-  components/  Button, Icon, ThemeToggle
-  lib/         theme.ts (light or dark, follows the system until the viewer chooses)
+  views/       Overview (one view per tab; Drafts and Metrics come next)
+  components/  Card, Chip, Tile, Tabs, EmailRow, EmailCard, AiCard, SummaryCard, InboxCard, EmailDetail, EmptyState, Button, Icon, ThemeToggle
+  lib/         theme.ts (light or dark), format.ts (names and dates), categories.ts (labels and tones)
   styles/      tokens.css
 ```
+
+The Overview view holds the state (filter, search, selected email) and reads the digest. It shows the summary tiles, which double as filters, the inbox by priority and, beside it, two separate cards for the selected email: the email as it arrived, and the AI analysis with a purple mark so the reader always knows what the model produced. A day with no analysed emails, a loading digest and a failed request each get their own state.
 
 `src/api/schema.d.ts` is generated from the API's OpenAPI description. With the API running, `npm run gen:api` regenerates it, and `tsc` then reports any place where the frontend no longer matches the backend. The generated file is committed, so building does not need the API.
 
