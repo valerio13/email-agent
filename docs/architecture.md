@@ -86,6 +86,19 @@ Mail and LLM access sit behind two small interfaces, so the rest of the app neve
 
 `demo/emails.json` holds 11 fictitious emails (3 urgent, 4 needing a reply, 4 informational) used by demo mode and the tests.
 
+## Services
+
+Each service takes the database session and its providers through the constructor, and commits its own transactions.
+
+| Service | Operations | Notes |
+|---|---|---|
+| `IngestService` | `run()` | Stores the emails the database does not have yet and returns how many were new. |
+| `AnalysisService` | `run()` | Analyses every email without an analysis and creates a draft when a reply is needed. Each email has its own transaction: if the model fails on one, that email stays pending and is retried on the next run. |
+| `DigestService` | `build()` | Returns a `Digest`: total, counts per category, pending drafts and all analysed emails, highest priority first and newest first within each priority. |
+| `DraftService` | `list_pending()`, `edit()`, `approve()`, `discard()` | Approving creates the draft in the mailbox first and marks it approved afterwards, so a mailbox failure leaves the database unchanged. A draft that was already approved or discarded cannot change again. |
+
+`app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. `build_services(session)` assembles the four services on one session.
+
 ## Design rules
 
 1. `MailProvider` has no send operation, and a test guarantees it.

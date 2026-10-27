@@ -76,3 +76,19 @@ class Draft(BaseModel):
     gmail_draft_id: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class DigestItem(BaseModel):
+    """One line of the digest: an email together with its analysis."""
+
+    email: Email
+    analysis: EmailAnalysis
+
+
+class Digest(BaseModel):
+    """The prioritized summary shown at the top of the dashboard."""
+
+    total: int
+    counts: dict[Category, int]
+    pending_drafts: int
+    items: list[DigestItem]

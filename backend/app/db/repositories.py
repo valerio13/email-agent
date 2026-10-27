@@ -4,7 +4,7 @@ Repositories never commit. The caller (a service) decides when to commit or roll
 """
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.models import AnalysisRecord, DraftRecord, EmailRecord
 from app.domain.models import Draft, DraftStatus, Email, EmailAnalysis
@@ -54,6 +54,15 @@ class AnalysisRepository:
         stmt = select(AnalysisRecord).where(AnalysisRecord.email_id == email_id)
         record = self._session.scalars(stmt).first()
         return EmailAnalysis.model_validate(record) if record else None
+
+    def list_with_emails(self) -> list[tuple[Email, EmailAnalysis]]:
+        """Return every analysed email together with its analysis."""
+        # joinedload fetches each email in the same query, instead of one query per analysis.
+        stmt = select(AnalysisRecord).options(joinedload(AnalysisRecord.email))
+        return [
+            (Email.model_validate(record.email), EmailAnalysis.model_validate(record))
+            for record in self._session.scalars(stmt)
+        ]
 
 
 class DraftRepository:
