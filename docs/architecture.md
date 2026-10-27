@@ -120,6 +120,28 @@ FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted
 
 An unknown draft returns 404 and a draft that was already approved or discarded returns 409. The API has no authentication: it is meant for a single reviewer, locally or in a demo.
 
+## Frontend
+
+React single-page app in `frontend/`, built with Vite. It only talks to the REST API under `/api`.
+
+| Piece | Choice | Role |
+|---|---|---|
+| Build and dev server | Vite | In development it proxies `/api` to the API on port 8000, so requests are same-origin, as in production |
+| Language | TypeScript 5.9 | Pinned to 5.x because `openapi-typescript` does not support 7 yet |
+| Styling | Tailwind v4 | Utility classes. Design tokens (colors, relief shadows, radii, light and dark themes) live in `src/styles/tokens.css` and are exposed as utilities (`bg-mint`, `shadow-raise-2`, `rounded-card`) |
+| Data | TanStack Query | Caching, loading and error states. Every action refreshes all queries |
+| Lint | oxlint | `npm run lint` |
+
+```
+src/
+  api/         schema.d.ts (generated), client.ts (fetch wrapper, ApiError), hooks.ts (queries and actions)
+  components/  Button, Icon, ThemeToggle
+  lib/         theme.ts (light or dark, follows the system until the viewer chooses)
+  styles/      tokens.css
+```
+
+`src/api/schema.d.ts` is generated from the API's OpenAPI description. With the API running, `npm run gen:api` regenerates it, and `tsc` then reports any place where the frontend no longer matches the backend. The generated file is committed, so building does not need the API.
+
 ## Scheduler
 
 `app/scheduler.py` registers one APScheduler job, `daily-pipeline`, that runs `PipelineService` (ingest, then analysis) every day. The scheduler runs in a background thread of the API process: `app/main.py` starts it on startup and stops it on shutdown. The job opens its own database session because there is no HTTP request.

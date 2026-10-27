@@ -1,0 +1,112 @@
+/*
+ * Design tokens, ported from the approved dashboard mockup.
+ * Light values live on :root. The dark values appear twice on purpose: once for a system that
+ * prefers dark (unless the viewer forced light) and once for the explicit dark choice.
+ */
+:root {
+  --bg: #efeeea;
+  --fg: #23262b;
+  --fg-muted: #565b63;
+  --mint: #8fe3c8;
+  --on-mint: #0d382c;
+  --mint-ink: #0c6a51;
+  --glow: rgba(110, 214, 182, 0.6);
+  --ring: rgba(70, 190, 155, 0.75);
+  --gray: #cfcecb;
+  --gray-ink: #858990;
+  --amber: #f3dc8e;
+  --on-amber: #4a3900;
+  --rose: #f2a6a6;
+  --on-rose: #581414;
+  --ai: #d6cff7;
+  --on-ai: #2b2060;
+  --sh-lt: rgba(255, 255, 255, 1);
+  --sh-dk: rgba(126, 126, 120, 0.26);
+  /* Relief: light comes from the top right. A bright rim on that side, a dark crisp edge on the
+     opposite one, and a soft shadow underneath. */
+  --hi: rgba(255, 255, 255, 0.6);
+  --edge: rgba(96, 84, 62, 0.2);
+  --sh-soft: rgba(99, 102, 98, 0.1);
+  --raise-1: 4px -4px 4px var(--hi), -4px 4px 4px var(--edge), -6px 8px 10px var(--sh-soft);
+  --raise-2: 6px -6px 4px var(--hi), -5px 5px 4px var(--edge), -10px 14px 22px var(--sh-soft);
+  --press: inset -3px 3px 4px var(--sh-dk), inset 3px -3px 4px var(--sh-lt);
+  --r-card: 18px;
+  --r-tile: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #1f2225;
+    --fg: #eceded;
+    --fg-muted: #a6abb2;
+    --mint: #6fd5b3;
+    --on-mint: #07261d;
+    --mint-ink: #86e3c5;
+    --glow: rgba(111, 213, 179, 0.4);
+    --ring: rgba(134, 227, 197, 0.8);
+    --gray: #3a3e43;
+    --gray-ink: #7d828a;
+    --amber: #dcc265;
+    --on-amber: #2b2100;
+    --rose: #dc8686;
+    --on-rose: #2b0a0a;
+    --ai: #9d93e0;
+    --on-ai: #17113a;
+    --sh-lt: rgba(255, 255, 255, 0.05);
+    --sh-dk: rgba(0, 0, 0, 0.6);
+    --hi: rgba(255, 255, 255, 0.16);
+    --edge: rgba(0, 0, 0, 0.75);
+    --sh-soft: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1f2225;
+  --fg: #eceded;
+  --fg-muted: #a6abb2;
+  --mint: #6fd5b3;
+  --on-mint: #07261d;
+  --mint-ink: #86e3c5;
+  --glow: rgba(111, 213, 179, 0.4);
+  --ring: rgba(134, 227, 197, 0.8);
+  --gray: #3a3e43;
+  --gray-ink: #7d828a;
+  --amber: #dcc265;
+  --on-amber: #2b2100;
+  --rose: #dc8686;
+  --on-rose: #2b0a0a;
+  --ai: #9d93e0;
+  --on-ai: #17113a;
+  --sh-lt: rgba(255, 255, 255, 0.05);
+  --sh-dk: rgba(0, 0, 0, 0.6);
+  --hi: rgba(255, 255, 255, 0.16);
+  --edge: rgba(0, 0, 0, 0.75);
+  --sh-soft: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+/* Expose the tokens as Tailwind utilities (bg-mint, text-fg-muted, shadow-raise-1, rounded-card).
+   "inline" keeps them pointing at the variables above, so they follow the active theme. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-mint: var(--mint);
+  --color-on-mint: var(--on-mint);
+  --color-mint-ink: var(--mint-ink);
+  --color-gray: var(--gray);
+  --color-gray-ink: var(--gray-ink);
+  --color-amber: var(--amber);
+  --color-on-amber: var(--on-amber);
+  --color-rose: var(--rose);
+  --color-on-rose: var(--on-rose);
+  --color-ai: var(--ai);
+  --color-on-ai: var(--on-ai);
+  --shadow-raise-1: var(--raise-1);
+  --shadow-raise-2: var(--raise-2);
+  --shadow-press: var(--press);
+  --radius-card: var(--r-card);
+  --radius-tile: var(--r-tile);
+  --font-sans: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

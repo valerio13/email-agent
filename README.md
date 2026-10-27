@@ -27,6 +27,13 @@ uv run alembic upgrade head   # create the database tables
 uv run fastapi dev            # API at http://127.0.0.1:8000, docs at /docs
 ```
 
+Dashboard (Node 24 and npm), in a second terminal:
+
+```bash
+cd frontend && npm install
+npm run dev                   # http://localhost:5173, proxies /api to the API on port 8000
+```
+
 ## Demo mode
 
 Runs on fictitious emails and needs no mailbox credentials (`DEMO_MODE=true`). Open `/docs` and call `POST /api/demo/run` to load and analyse the demo emails. They are dated relative to today, so the demo always looks current. `POST /api/demo/reset` wipes the data and loads them again.
