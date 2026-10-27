@@ -73,6 +73,19 @@ Draft status values are `proposed`, `approved` and `discarded`.
 - `app/db/repositories.py`: `EmailRepository`, `AnalysisRepository` and `DraftRepository`. They take and return domain models (Pydantic), so services never touch tables or SQL. Repositories never commit: the calling service decides when to commit or roll back.
 - `migrations/`: Alembic migrations. Apply them with `uv run alembic upgrade head`.
 
+## Providers
+
+Mail and LLM access sit behind two small interfaces, so the rest of the app never knows which vendor or mailbox is behind them.
+
+| Interface | Operations | Implementations |
+|---|---|---|
+| `MailProvider` | `fetch_new()`, `create_draft(email, body)` | `DemoMailProvider` (reads `demo/emails.json`, keeps drafts in memory) |
+| `LLMProvider` | `analyze_email(email)` returns a validated `EmailAnalysis` | `FakeLLMProvider` (keyword rules, no API key) |
+
+`MailProvider` has no send operation. The Gmail and LangChain implementations will implement the same interfaces.
+
+`demo/emails.json` holds 11 fictitious emails (3 urgent, 4 needing a reply, 4 informational) used by demo mode and the tests.
+
 ## Design rules
 
 1. `MailProvider` has no send operation, and a test guarantees it.

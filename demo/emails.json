@@ -1,0 +1,79 @@
+[
+  {
+    "id": "demo-001",
+    "sender": "Marcus Lee <marcus.lee@northwind.example.com>",
+    "subject": "Production API is down",
+    "body": "Our integration has been returning errors since 09:00. This is an outage affecting all our customers. Please call me as soon as you can.",
+    "received_at": "2026-10-26T09:14:00Z"
+  },
+  {
+    "id": "demo-002",
+    "sender": "Billing <billing@brightfield.example.com>",
+    "subject": "Invoice 2041 is overdue",
+    "body": "Invoice 2041 for 1,800 EUR is 15 days overdue. Please confirm when the payment will be sent.",
+    "received_at": "2026-10-26T08:40:00Z"
+  },
+  {
+    "id": "demo-003",
+    "sender": "Elena Torres <elena.torres@harborlegal.example.com>",
+    "subject": "Contract signature needed by Friday",
+    "body": "The service contract has a deadline this Friday. We need your signature to keep the start date.",
+    "received_at": "2026-10-25T16:05:00Z"
+  },
+  {
+    "id": "demo-004",
+    "sender": "Priya Nair <priya.nair@lumen.example.com>",
+    "subject": "Quote for the Q4 website redesign",
+    "body": "Hello, could you send us a quote for redesigning our website? We would like to start in November.",
+    "received_at": "2026-10-26T07:55:00Z"
+  },
+  {
+    "id": "demo-005",
+    "sender": "Tom Becker <tom.becker@orchard.example.com>",
+    "subject": "Call next week",
+    "body": "Are you free for a 30 minute call on Tuesday or Wednesday? I would like to go over the roadmap.",
+    "received_at": "2026-10-25T18:20:00Z"
+  },
+  {
+    "id": "demo-006",
+    "sender": "Sofia Alvarez <sofia.alvarez@kestrel.example.com>",
+    "subject": "Onboarding for new teams",
+    "body": "Hi, I have a question about how onboarding works for new teams. Can you share the steps?",
+    "received_at": "2026-10-26T06:30:00Z"
+  },
+  {
+    "id": "demo-007",
+    "sender": "Daniel Kim <daniel.kim@solstice.example.com>",
+    "subject": "Feedback on the draft proposal",
+    "body": "Please review the proposal I sent on Monday and tell me what you think.",
+    "received_at": "2026-10-24T14:10:00Z"
+  },
+  {
+    "id": "demo-008",
+    "sender": "Product Weekly <news@productweekly.example.com>",
+    "subject": "Your weekly product newsletter",
+    "body": "This week we shipped three new features and published a guide to better reporting. Read more on our blog.",
+    "received_at": "2026-10-26T05:00:00Z"
+  },
+  {
+    "id": "demo-009",
+    "sender": "Shop Notifications <orders@papertrail.example.com>",
+    "subject": "Your order 88231 has shipped",
+    "body": "Your order has shipped and will arrive in 3 to 5 days. You can track it from your account.",
+    "received_at": "2026-10-25T12:45:00Z"
+  },
+  {
+    "id": "demo-010",
+    "sender": "Cloudbox <receipts@cloudbox.example.com>",
+    "subject": "Receipt for your payment",
+    "body": "Thanks for your payment of 24 EUR. Your receipt is attached to this email.",
+    "received_at": "2026-10-24T09:00:00Z"
+  },
+  {
+    "id": "demo-011",
+    "sender": "Hosting Team <status@hostco.example.com>",
+    "subject": "Maintenance window on Sunday",
+    "body": "We will run scheduled maintenance on Sunday between 02:00 and 03:00 UTC. No action is needed on your side.",
+    "received_at": "2026-10-23T15:30:00Z"
+  }
+]

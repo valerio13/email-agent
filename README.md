@@ -4,8 +4,8 @@ Reads new mail every day, writes a prioritized summary (urgent, needs a reply, i
 
 Status: work in progress.
 
-- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories).
-- Next: mail and LLM providers, services, API, scheduler, dashboard.
+- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations.
+- Next: Gmail and LangChain providers, services, API, scheduler, dashboard.
 
 ## Architecture
 
