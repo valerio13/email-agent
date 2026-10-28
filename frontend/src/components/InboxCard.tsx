@@ -42,6 +42,7 @@ export function InboxCard({
           <Icon name="search" />
           <input
             type="search"
+            aria-label="Search subject or sender"
             value={query}
             onChange={(event) => onQuery(event.target.value)}
             placeholder="Search subject or sender"

@@ -54,3 +54,10 @@
       drop-shadow(-6px 8px 10px var(--sh-soft)) drop-shadow(0 0 14px var(--glow));
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

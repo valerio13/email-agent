@@ -23,6 +23,7 @@ htmlcov/
 # Node
 node_modules/
 dist/
+.vitest/
 
 # OS and editors
 .DS_Store

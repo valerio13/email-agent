@@ -34,6 +34,15 @@ cd frontend && npm install
 npm run dev                   # http://localhost:5173, proxies /api to the API on port 8000
 ```
 
+To run everything as one process, the way it is served in production, build the dashboard and let the API serve it:
+
+```bash
+cd frontend && npm run build
+cd ../backend && uv run fastapi run   # dashboard and API at http://127.0.0.1:8000
+```
+
+Frontend checks: `npm run lint`, `npm run build` (type-checks the app and its tests) and `npm test`.
+
 ## Demo mode
 
 Runs on fictitious emails and needs no mailbox credentials (`DEMO_MODE=true`). Open `/docs` and call `POST /api/demo/run` to load and analyse the demo emails. They are dated relative to today, so the demo always looks current. `POST /api/demo/reset` wipes the data and loads them again.

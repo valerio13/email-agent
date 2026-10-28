@@ -132,6 +132,7 @@ React single-page app in `frontend/`, built with Vite. It only talks to the REST
 | Styling | Tailwind v4 | Utility classes. Design tokens (colors, relief shadows, radii, light and dark themes) live in `src/styles/tokens.css` and are exposed as utilities (`bg-mint`, `shadow-raise-2`, `rounded-card`) |
 | Data | TanStack Query | Caching, loading and error states. Every action refreshes all queries |
 | Lint | oxlint | `npm run lint` |
+| Tests | Vitest, Testing Library, axe-core | `npm test` |
 
 ```
 src/
@@ -153,9 +154,19 @@ The Drafts view is the human review. It lists every pending draft, of any day, n
 
 The Metrics view shows the last seven days: four figures (emails processed, drafts created, estimated time saved, drafts waiting), a bar chart of emails per day drawn with Recharts, and the category mix of the latest day. The view is loaded only when its tab opens, because Recharts is about half of the JavaScript.
 
+Keyboard and screen readers: the tabs follow the WAI-ARIA pattern (only the selected tab is in the tab order, arrow keys, Home and End move between tabs, each tab names the panel it controls), a skip link jumps to the main content, every card that is a landmark has a unique name, the chart and the mix bar have a text description, and the transitions stop when the system asks for reduced motion.
+
 The demo buttons (Reset demo in the header, Load demo emails when there is no data) appear only when `GET /api/config` says the app runs in demo mode. Outside it they would get a 403.
 
 `src/api/schema.d.ts` is generated from the API's OpenAPI description. With the API running, `npm run gen:api` regenerates it, and `tsc` then reports any place where the frontend no longer matches the backend. The generated file is committed, so building does not need the API.
+
+### Frontend tests
+
+The tests run in jsdom with Testing Library. `src/test/fakeApi.ts` is a small stand-in for the backend: it answers the API calls from memory and records the ones that change something, so a test can check what the screen sent and in which order (for example that edited text is saved before a draft is approved). The tests cover the formatting helpers, the three views, the review flow including a 409 conflict, the keyboard navigation of the tabs, demo mode, the theme, and an axe-core accessibility check of each tab. The Recharts bars are not drawn in jsdom, so the chart is checked through its text description.
+
+## Serving the dashboard
+
+In production the API serves the built dashboard (`frontend/dist`) at `/`, so one process and one port serve both (`serve_frontend` in `app/main.py`, built on FastAPI's `app.frontend`). API routes win over the files, and an unknown `/api` path still answers a JSON 404. If `frontend/dist` does not exist, as in development or in the backend tests, only the API runs and the dashboard comes from the Vite server.
 
 ## Scheduler
 

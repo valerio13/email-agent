@@ -3,6 +3,7 @@
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -16,6 +17,9 @@ from app.services.drafts import DraftNotFoundError, DraftNotPendingError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# main.py -> app -> backend -> project root. The Docker image keeps the same layout.
+FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
 
 @asynccontextmanager
@@ -53,3 +57,16 @@ def draft_not_found(request: Request, exc: DraftNotFoundError) -> JSONResponse:
 @app.exception_handler(DraftNotPendingError)
 def draft_not_pending(request: Request, exc: DraftNotPendingError) -> JSONResponse:
     return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+
+def serve_frontend(app: FastAPI, directory: Path) -> None:
+    """Serve the built dashboard at / when it exists, so one process and one port serve both.
+
+    API routes are checked first, and an unknown /api path still answers a JSON 404. Without a
+    build (development, tests) only the API runs and the dashboard comes from the Vite server.
+    """
+    if directory.is_dir():
+        app.frontend("/", directory=directory)
+
+
+serve_frontend(app, FRONTEND_DIST)

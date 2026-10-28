@@ -11,7 +11,7 @@ export function AiCard({ item, big = false }: { item: DigestItem; big?: boolean 
   const { email, analysis, draft } = item
   const category = CATEGORIES[analysis.category]
   return (
-    <Card aria-label="AI analysis" className="grid content-start gap-5">
+    <Card aria-label={`AI analysis of ${email.subject}`} className="grid content-start gap-5">
       <div className="flex items-center gap-3.5">
         <span className="grid size-10 flex-none place-items-center rounded-xl bg-ai text-on-ai shadow-raise-1">
           <Icon name="sparkle" size={22} />

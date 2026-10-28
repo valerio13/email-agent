@@ -4,8 +4,9 @@ import { EmptyState } from './components/EmptyState'
 import { Icon } from './components/Icon'
 import { NoticeBar, NoticeProvider } from './components/NoticeProvider'
 import { ResetDemoButton } from './components/ResetDemoButton'
-import { type TabId, Tabs } from './components/Tabs'
+import { Tabs } from './components/Tabs'
 import { ThemeToggle } from './components/ThemeToggle'
+import { PANEL_ID, type TabId, tabElementId } from './lib/tabs'
 import { Drafts } from './views/Drafts'
 import { Overview } from './views/Overview'
 
@@ -19,6 +20,12 @@ export default function App() {
 
   return (
     <NoticeProvider>
+      <a
+        href="#content"
+        className="sr-only font-bold focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-10 focus:rounded-full focus:bg-mint focus:px-5 focus:py-2.5 focus:text-on-mint focus:shadow-raise-2"
+      >
+        Skip to content
+      </a>
       <div className="mx-auto grid max-w-[1240px] gap-7 pt-7 pr-[max(16px,env(safe-area-inset-right,0px))] pb-14 pl-[max(16px,env(safe-area-inset-left,0px))]">
         <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
           <div className="flex min-w-0 items-center gap-3.5">
@@ -37,17 +44,24 @@ export default function App() {
             {config?.demo_mode && <ResetDemoButton />}
           </div>
         </header>
-        <Tabs tab={tab} onChange={setTab} draftCount={digest?.pending_drafts ?? 0} />
-        <NoticeBar />
-        <div role="tabpanel" aria-labelledby={`tab-${tab}`} className="grid gap-7">
-          {tab === 'overview' && <Overview onOpenDrafts={() => setTab('drafts')} />}
-          {tab === 'drafts' && <Drafts />}
-          {tab === 'metrics' && (
-            <Suspense fallback={<EmptyState icon="refresh" title="Loading the metrics" />}>
-              <Metrics />
-            </Suspense>
-          )}
-        </div>
+        <main id="content" tabIndex={-1} className="grid gap-7 outline-none">
+          <Tabs tab={tab} onChange={setTab} draftCount={digest?.pending_drafts ?? 0} />
+          <NoticeBar />
+          <div
+            role="tabpanel"
+            id={PANEL_ID}
+            aria-labelledby={tabElementId(tab)}
+            className="grid gap-7"
+          >
+            {tab === 'overview' && <Overview onOpenDrafts={() => setTab('drafts')} />}
+            {tab === 'drafts' && <Drafts />}
+            {tab === 'metrics' && (
+              <Suspense fallback={<EmptyState icon="refresh" title="Loading the metrics" />}>
+                <Metrics />
+              </Suspense>
+            )}
+          </div>
+        </main>
       </div>
     </NoticeProvider>
   )
