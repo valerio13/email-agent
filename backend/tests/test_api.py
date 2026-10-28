@@ -55,6 +55,12 @@ def test_demo_reset_deletes_everything_and_loads_the_emails_again(loaded_client)
     assert len(loaded_client.get("/api/drafts").json()) == 21
 
 
+def test_config_tells_whether_the_app_runs_in_demo_mode(client):
+    assert client.get("/api/config").json() == {"demo_mode": True}
+    app.dependency_overrides[get_settings] = lambda: make_settings(demo_mode=False)
+    assert client.get("/api/config").json() == {"demo_mode": False}
+
+
 def test_digest_is_empty_before_the_first_run(client):
     digest = client.get("/api/digest").json()
     assert digest["day"] is None

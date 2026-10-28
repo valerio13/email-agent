@@ -40,3 +40,17 @@
     outline-offset: 3px;
   }
 }
+
+@layer components {
+  /* The relief of the cards, for SVG shapes: box-shadow does not apply to them, so the same
+     three layers are drawn with drop-shadow. */
+  .chart-bar {
+    filter: drop-shadow(4px -4px 4px var(--hi)) drop-shadow(-4px 4px 4px var(--edge))
+      drop-shadow(-6px 8px 10px var(--sh-soft));
+  }
+
+  .chart-bar-latest {
+    filter: drop-shadow(4px -4px 4px var(--hi)) drop-shadow(-4px 4px 4px var(--edge))
+      drop-shadow(-6px 8px 10px var(--sh-soft)) drop-shadow(0 0 14px var(--glow));
+  }
+}

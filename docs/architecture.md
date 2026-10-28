@@ -115,6 +115,7 @@ FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted
 | `PATCH /api/drafts/{id}` | Edit the text of a pending draft |
 | `POST /api/drafts/{id}/approve` | Create the draft in the mailbox and mark it approved |
 | `POST /api/drafts/{id}/discard` | Discard a pending draft |
+| `GET /api/config` | Whether the app runs in demo mode, so the dashboard shows its demo buttons only then |
 | `POST /api/demo/run` | Run the pipeline on demand, reloading the demo emails if they are from an earlier day. Demo mode only (403 otherwise) |
 | `POST /api/demo/reset` | Delete all data and load the demo emails again. Demo mode only (403 otherwise) |
 
@@ -135,8 +136,8 @@ React single-page app in `frontend/`, built with Vite. It only talks to the REST
 ```
 src/
   api/         schema.d.ts (generated), client.ts (fetch wrapper, ApiError), hooks.ts (queries and actions)
-  views/       Overview and Drafts (one view per tab; Metrics comes next)
-  components/  Card, Chip, Tile, Tabs, EmailRow, EmailCard, AiCard, DraftEditor, NoticeProvider, SummaryCard, InboxCard, EmailDetail, EmptyState, Button, Icon, ThemeToggle
+  views/       Overview, Drafts and Metrics (one view per tab)
+  components/  Card, Chip, Tile, Tabs, EmailRow, EmailCard, AiCard, DraftEditor, NoticeProvider, SummaryCard, InboxCard, EmailDetail, DayChart, MixCard, ResetDemoButton, EmptyState, Button, Icon, ThemeToggle
   lib/         theme.ts (light or dark), format.ts (names and dates), categories.ts (labels and tones), notice.ts (message shown after an action)
   styles/      tokens.css
 ```
@@ -149,6 +150,10 @@ The Drafts view is the human review. It lists every pending draft, of any day, n
 - Approving creates the draft in the mailbox and never sends. A short message under the tabs confirms what happened for seven seconds.
 - Every action refreshes all the queries, also after a failure. A 404 or 409 (for example a draft decided in another window) shows the API's message and brings the screen up to date.
 - A request that cannot reach the API shows "Could not reach the API." after one quick retry.
+
+The Metrics view shows the last seven days: four figures (emails processed, drafts created, estimated time saved, drafts waiting), a bar chart of emails per day drawn with Recharts, and the category mix of the latest day. The view is loaded only when its tab opens, because Recharts is about half of the JavaScript.
+
+The demo buttons (Reset demo in the header, Load demo emails when there is no data) appear only when `GET /api/config` says the app runs in demo mode. Outside it they would get a 403.
 
 `src/api/schema.d.ts` is generated from the API's OpenAPI description. With the API running, `npm run gen:api` regenerates it, and `tsc` then reports any place where the frontend no longer matches the backend. The generated file is committed, so building does not need the API.
 

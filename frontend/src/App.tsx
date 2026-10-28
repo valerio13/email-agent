@@ -1,16 +1,21 @@
-import { useState } from 'react'
-import { useDigest } from './api/hooks'
+import { lazy, Suspense, useState } from 'react'
+import { useConfig, useDigest } from './api/hooks'
 import { EmptyState } from './components/EmptyState'
 import { Icon } from './components/Icon'
 import { NoticeBar, NoticeProvider } from './components/NoticeProvider'
+import { ResetDemoButton } from './components/ResetDemoButton'
 import { type TabId, Tabs } from './components/Tabs'
 import { ThemeToggle } from './components/ThemeToggle'
 import { Drafts } from './views/Drafts'
 import { Overview } from './views/Overview'
 
+// Recharts is large, so the Metrics view is fetched only when its tab is opened.
+const Metrics = lazy(() => import('./views/Metrics').then((module) => ({ default: module.Metrics })))
+
 export default function App() {
   const [tab, setTab] = useState<TabId>('overview')
   const { data: digest } = useDigest()
+  const { data: config } = useConfig()
 
   return (
     <NoticeProvider>
@@ -27,18 +32,20 @@ export default function App() {
               </p>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="flex flex-wrap gap-3">
+            <ThemeToggle />
+            {config?.demo_mode && <ResetDemoButton />}
+          </div>
         </header>
         <Tabs tab={tab} onChange={setTab} draftCount={digest?.pending_drafts ?? 0} />
         <NoticeBar />
         <div role="tabpanel" aria-labelledby={`tab-${tab}`} className="grid gap-7">
           {tab === 'overview' && <Overview onOpenDrafts={() => setTab('drafts')} />}
           {tab === 'drafts' && <Drafts />}
-          {/* The Metrics view arrives in the next step. */}
           {tab === 'metrics' && (
-            <EmptyState icon="refresh" title="Coming soon">
-              This section is built in a later step.
-            </EmptyState>
+            <Suspense fallback={<EmptyState icon="refresh" title="Loading the metrics" />}>
+              <Metrics />
+            </Suspense>
           )}
         </div>
       </div>

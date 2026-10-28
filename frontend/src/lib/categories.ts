@@ -18,3 +18,13 @@ export const PRIORITY_LABEL: Record<Priority, string> = {
 
 // Number of filled bars in the priority indicator.
 export const PRIORITY_LEVEL: Record<Priority, 1 | 2 | 3> = { low: 1, medium: 2, high: 3 }
+
+// The colored dots of the tiles and the mix bar. 'ready' marks drafts waiting for a decision.
+export type DotTone = Tone | 'ready'
+
+export const DOT_COLORS: Record<DotTone, string> = {
+  urgent: 'bg-rose',
+  reply: 'bg-amber',
+  info: 'bg-gray',
+  ready: 'bg-mint',
+}

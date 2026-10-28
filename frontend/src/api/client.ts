@@ -13,6 +13,7 @@ export type DigestItem = Schemas['DigestItem']
 export type DailyCount = Schemas['DailyCount']
 export type Metrics = Schemas['Metrics']
 export type PipelineResult = Schemas['PipelineResult']
+export type AppConfig = Schemas['AppConfig']
 // OpenAPI describes the counts as a plain string map. They are keyed by category.
 export type Digest = Omit<Schemas['Digest'], 'counts'> & { counts: Record<Category, number> }
 
@@ -57,6 +58,7 @@ export const api = {
   digest: () => request<Digest>('/digest'),
   drafts: () => request<DigestItem[]>('/drafts'),
   metrics: () => request<Metrics>('/metrics'),
+  config: () => request<AppConfig>('/config'),
   editDraft: (id: number, body: string) =>
     request<Draft>(`/drafts/${id}`, {
       method: 'PATCH',

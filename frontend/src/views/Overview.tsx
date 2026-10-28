@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useDigest, useRunDemo } from '../api/hooks'
+import { useConfig, useDigest, useRunDemo } from '../api/hooks'
 import { Button } from '../components/Button'
 import { EmailDetail } from '../components/EmailDetail'
 import { EmptyState } from '../components/EmptyState'
@@ -10,6 +10,7 @@ import { type Filter, SummaryCard } from '../components/SummaryCard'
 export function Overview({ onOpenDrafts }: { onOpenDrafts: () => void }) {
   const { data: digest, error, isPending, refetch } = useDigest()
   const runDemo = useRunDemo()
+  const { data: config } = useConfig()
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -33,9 +34,11 @@ export function Overview({ onOpenDrafts }: { onOpenDrafts: () => void }) {
         icon="mail"
         title="No emails analysed yet"
         action={
-          <Button variant="primary" onClick={() => runDemo.mutate()} disabled={runDemo.isPending}>
-            Load demo emails
-          </Button>
+          config?.demo_mode && (
+            <Button variant="primary" onClick={() => runDemo.mutate()} disabled={runDemo.isPending}>
+              {runDemo.isPending ? 'Loading demo emails...' : 'Load demo emails'}
+            </Button>
+          )
         }
       >
         {runDemo.error?.message ?? 'New mail appears here after the next daily run.'}

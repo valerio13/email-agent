@@ -4,6 +4,9 @@ import { api } from './client'
 export const useDigest = () => useQuery({ queryKey: ['digest'], queryFn: api.digest })
 export const useDrafts = () => useQuery({ queryKey: ['drafts'], queryFn: api.drafts })
 export const useMetrics = () => useQuery({ queryKey: ['metrics'], queryFn: api.metrics })
+// How the app runs does not change while it is open, so it is read once.
+export const useConfig = () =>
+  useQuery({ queryKey: ['config'], queryFn: api.config, staleTime: Infinity })
 
 // Every action changes what the three views show, so each one refreshes all the queries and
 // finishes only when they have loaded again. It also refreshes after a failure: a 404 or a 409
