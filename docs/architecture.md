@@ -80,12 +80,23 @@ Mail and LLM access sit behind two small interfaces, so the rest of the app neve
 
 | Interface | Operations | Implementations |
 |---|---|---|
-| `MailProvider` | `fetch_new()`, `create_draft(email, body)` | `DemoMailProvider` (reads `demo/emails.json`, dates them relative to now, keeps drafts in memory) |
+| `MailProvider` | `fetch_new()`, `create_draft(email, body)` | `DemoMailProvider` (reads `demo/emails.json`, dates them relative to now, keeps drafts in memory) and `GmailMailProvider` (Gmail API) |
 | `LLMProvider` | `analyze_email(email)` returns a validated `EmailAnalysis` | `FakeLLMProvider` (keyword rules, no API key) |
 
-`MailProvider` has no send operation. The Gmail and LangChain implementations will implement the same interfaces.
+`MailProvider` has no send operation. The LangChain implementation of `LLMProvider` will implement the same interface as the fake one.
 
 `demo/emails.json` holds 36 fictitious emails spread over 7 days (7 urgent, 14 needing a reply, 15 informational), used by demo mode and the tests. Instead of a date, each entry has `days_ago` and `time_utc`. `DemoMailProvider` turns them into real dates every time it fetches, so the demo never looks stale. An email whose time has not come yet today is moved to the day before, so no email comes from the future. Tests pass a fixed `now`.
+
+## Gmail
+
+`GmailMailProvider` (`app/providers/mail/gmail.py`) talks to the Gmail API through a client that is passed in, so tests use a fake one and never touch the network.
+
+- **Reading:** `fetch_new()` returns the messages that match `GMAIL_QUERY` (by default `in:inbox newer_than:2d`), up to `GMAIL_MAX_EMAILS`. The email id is the Gmail message id, so the ingest step skips what it already has. The body is the plain text part, or the text of the HTML when there is none, cut at 20,000 characters.
+- **Drafts:** `create_draft()` builds a reply and saves it as a Gmail draft in the same thread. It asks Gmail for the thread id and the original `Message-ID` at that moment, so the stored email needs neither. The reply goes to `Reply-To` when present, its subject gets one `Re:` and it carries `In-Reply-To` and `References`. A header with a line break is rejected, so a hostile email cannot add recipients.
+- **Scopes:** `gmail.readonly` to read and `gmail.compose` to create drafts. `gmail.compose` is the narrowest scope that can create a draft, and Google also lets it send mail. The promise that nothing is sent therefore rests on the code: `MailProvider` and `GmailMailProvider` have no send operation, and a test checks it.
+- **Authorization:** `uv run python -m app.cli authorize-gmail` opens the Google consent page once and prints a refresh token for `.env`. From then on the library asks Google for short-lived access tokens by itself.
+- **Token lifetime:** while the Google Cloud app is in Testing, Google expires the refresh token after 7 days. Moving the app to In production (unverified, for one account) avoids that, at the price of an "unverified app" warning on the consent page. Otherwise, run the authorize command again each week.
+- **Running by hand:** `uv run python -m app.cli run-pipeline` fetches and analyses the mail now, instead of waiting for the daily run.
 
 ## Services
 
@@ -101,7 +112,7 @@ Each service takes the database session and its providers through the constructo
 | `PipelineService` | `run()` | The daily run: ingest, then analysis. Used by the scheduler and by the demo service. |
 | `DemoService` | `run()`, `reset()` | Demo mode only. `run()` runs the pipeline, but first starts over if the mailbox now offers mail from a later day than the stored one, so the dashboard always shows current dates. `reset()` deletes every email, analysis and draft and loads the demo emails again. |
 
-`app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. `build_services(session, mail, llm)` assembles the services on one session.
+`app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. Outside it, it builds the Gmail mailbox, and the model stays fake (`LLM_PROVIDER=fake`) until the LangChain provider exists, so a real mailbox can be tried first. `build_services(session, mail, llm)` assembles the services on one session.
 
 ## API
 
@@ -119,7 +130,7 @@ FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted
 | `POST /api/demo/run` | Run the pipeline on demand, reloading the demo emails if they are from an earlier day. Demo mode only (403 otherwise) |
 | `POST /api/demo/reset` | Delete all data and load the demo emails again. Demo mode only (403 otherwise) |
 
-An unknown draft returns 404 and a draft that was already approved or discarded returns 409. The API has no authentication: it is meant for a single reviewer, locally or in a demo.
+An unknown draft returns 404 and a draft that was already approved or discarded returns 409. If Gmail access has expired or was revoked, approving returns 503 with a message to authorize again, and if Gmail rejects a request it returns 502. In both cases the draft stays pending, because the mailbox is called before the database changes. The API has no authentication: it is meant for a single reviewer, locally or in a demo.
 
 ## Frontend
 

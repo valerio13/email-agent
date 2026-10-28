@@ -7,6 +7,8 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from google.auth.exceptions import RefreshError
+from googleapiclient.errors import HttpError
 
 from app.api.router import api_router
 from app.core.config import get_settings
@@ -57,6 +59,19 @@ def draft_not_found(request: Request, exc: DraftNotFoundError) -> JSONResponse:
 @app.exception_handler(DraftNotPendingError)
 def draft_not_pending(request: Request, exc: DraftNotPendingError) -> JSONResponse:
     return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+
+@app.exception_handler(RefreshError)
+def gmail_access_expired(request: Request, exc: RefreshError) -> JSONResponse:
+    # In Testing mode Google lets a refresh token expire after 7 days, and the user can revoke it.
+    detail = "Gmail access expired or was revoked. Authorize it again (see the README)."
+    return JSONResponse(status_code=503, content={"detail": detail})
+
+
+@app.exception_handler(HttpError)
+def gmail_rejected(request: Request, exc: HttpError) -> JSONResponse:
+    detail = f"Gmail rejected the request ({exc.resp.status})."
+    return JSONResponse(status_code=502, content={"detail": detail})
 
 
 def serve_frontend(app: FastAPI, directory: Path) -> None:

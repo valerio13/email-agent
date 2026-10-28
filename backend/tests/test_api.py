@@ -1,7 +1,10 @@
 """API tests: real routers and services on an in-memory database, with the demo providers."""
 
+import httplib2
 import pytest
 from fastapi.testclient import TestClient
+from google.auth.exceptions import RefreshError
+from googleapiclient.errors import HttpError
 
 from app.api.dependencies import get_services
 from app.core.config import get_settings
@@ -148,3 +151,34 @@ def test_unknown_draft_returns_not_found(loaded_client):
 def test_empty_draft_text_is_rejected(loaded_client):
     draft_id = loaded_client.get("/api/drafts").json()[0]["draft"]["id"]
     assert loaded_client.patch(f"/api/drafts/{draft_id}", json={"body": "  "}).status_code == 422
+
+
+def test_expired_gmail_access_is_reported_and_the_draft_stays_pending(
+    loaded_client, mail, monkeypatch
+):
+    def expired(email, body):
+        raise RefreshError("invalid_grant")
+
+    monkeypatch.setattr(mail, "create_draft", expired)
+    draft_id = loaded_client.get("/api/drafts").json()[0]["draft"]["id"]
+
+    response = loaded_client.post(f"/api/drafts/{draft_id}/approve")
+
+    assert response.status_code == 503
+    assert "Authorize it again" in response.json()["detail"]
+    # The mailbox is called first, so nothing changed in the database.
+    assert len(loaded_client.get("/api/drafts").json()) == 21
+
+
+def test_a_gmail_error_is_reported_as_a_bad_gateway(loaded_client, mail, monkeypatch):
+    def rejected(email, body):
+        raise HttpError(httplib2.Response({"status": 403}), b"{}")
+
+    monkeypatch.setattr(mail, "create_draft", rejected)
+    draft_id = loaded_client.get("/api/drafts").json()[0]["draft"]["id"]
+
+    response = loaded_client.post(f"/api/drafts/{draft_id}/approve")
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Gmail rejected the request (403)."
+    assert len(loaded_client.get("/api/drafts").json()) == 21

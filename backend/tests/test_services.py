@@ -16,6 +16,7 @@ from app.domain.models import (
 from app.factory import build_llm_provider, build_mail_provider
 from app.providers.llm.fake import FakeLLMProvider
 from app.providers.mail.demo import DemoMailProvider
+from app.providers.mail.gmail import GmailMailProvider
 from app.services.analysis import AnalysisService
 from app.services.demo import DemoService
 from app.services.digest import DigestService
@@ -248,9 +249,37 @@ def test_factory_builds_demo_providers_in_demo_mode():
     assert isinstance(build_llm_provider(settings), FakeLLMProvider)
 
 
-def test_factory_refuses_real_providers_until_they_exist():
-    settings = make_settings(demo_mode=False)
-    with pytest.raises(NotImplementedError):
-        build_mail_provider(settings)
+GOOGLE = {
+    "google_client_id": "client-id",
+    "google_client_secret": "client-secret",
+    "google_refresh_token": "refresh-token",
+}
+
+
+def test_factory_builds_gmail_outside_demo_mode(monkeypatch):
+    # The real client is replaced, so the test needs no network and no credentials.
+    monkeypatch.setattr("app.factory.build_gmail_service", lambda settings: object())
+    provider = build_mail_provider(make_settings(demo_mode=False, **GOOGLE))
+    assert isinstance(provider, GmailMailProvider)
+
+
+def test_factory_explains_what_is_missing_for_gmail():
+    with pytest.raises(RuntimeError, match="authorize-gmail"):
+        build_mail_provider(make_settings(demo_mode=False))
+
+
+def test_factory_builds_the_gmail_client_from_the_settings():
+    # Building the client does not call Google: the token is only requested on the first use.
+    provider = build_mail_provider(make_settings(demo_mode=False, **GOOGLE))
+    assert isinstance(provider, GmailMailProvider)
+
+
+def test_fake_model_can_be_chosen_with_a_real_mailbox():
+    settings = make_settings(demo_mode=False, llm_provider="fake")
+    assert isinstance(build_llm_provider(settings), FakeLLMProvider)
+
+
+def test_factory_refuses_the_real_model_until_it_exists():
+    settings = make_settings(demo_mode=False, llm_provider="anthropic")
     with pytest.raises(NotImplementedError):
         build_llm_provider(settings)

@@ -14,6 +14,7 @@ from app.providers.llm.base import LLMProvider
 from app.providers.llm.fake import FakeLLMProvider
 from app.providers.mail.base import MailProvider
 from app.providers.mail.demo import DemoMailProvider
+from app.providers.mail.gmail import GmailMailProvider, build_gmail_service
 from app.services.analysis import AnalysisService
 from app.services.demo import DemoService
 from app.services.digest import DigestService
@@ -37,15 +38,20 @@ class Services:
 
 
 def build_mail_provider(settings: Settings) -> MailProvider:
-    """Return the demo mailbox in demo mode. The Gmail provider comes later."""
+    """Return the demo mailbox in demo mode, and the real Gmail mailbox otherwise."""
     if settings.demo_mode:
         return DemoMailProvider()
-    raise NotImplementedError("The Gmail provider is not implemented yet.")
+    return GmailMailProvider(
+        build_gmail_service(settings), settings.gmail_query, settings.gmail_max_emails
+    )
 
 
 def build_llm_provider(settings: Settings) -> LLMProvider:
-    """Return the fake model in demo mode. The LangChain provider comes later."""
-    if settings.demo_mode:
+    """Return the fake model in demo mode or when LLM_PROVIDER=fake. LangChain comes later.
+
+    LLM_PROVIDER=fake lets a real mailbox be tried before the real model is connected.
+    """
+    if settings.demo_mode or settings.llm_provider == "fake":
         return FakeLLMProvider()
     raise NotImplementedError("The LangChain provider is not implemented yet.")
 

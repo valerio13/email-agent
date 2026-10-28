@@ -9,6 +9,7 @@ from app.domain.models import Category, Priority
 from app.providers.llm.fake import FakeLLMProvider
 from app.providers.mail.base import MailProvider
 from app.providers.mail.demo import DemoMailProvider
+from app.providers.mail.gmail import GmailMailProvider
 from tests.helpers import DEMO_NOW
 
 
@@ -23,7 +24,7 @@ def public_method_names(cls: type) -> list[str]:
     ]
 
 
-@pytest.mark.parametrize("cls", [MailProvider, DemoMailProvider])
+@pytest.mark.parametrize("cls", [MailProvider, DemoMailProvider, GmailMailProvider])
 def test_mail_providers_cannot_send_email(cls):
     assert not [name for name in public_method_names(cls) if "send" in name.lower()]
 

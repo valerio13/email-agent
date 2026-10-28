@@ -4,8 +4,8 @@ Reads new mail every day, writes a prioritized summary (urgent, needs a reply, i
 
 Status: work in progress.
 
-- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory, the REST API and the daily scheduler.
-- Next: dashboard, then the Gmail and LangChain providers.
+- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory, the REST API, the daily scheduler, the dashboard and the Gmail provider.
+- Next: the LangChain model provider, then a complete Docker Compose setup.
 
 ## Architecture
 
@@ -46,6 +46,18 @@ Frontend checks: `npm run lint`, `npm run build` (type-checks the app and its te
 ## Demo mode
 
 Runs on fictitious emails and needs no mailbox credentials (`DEMO_MODE=true`). Open `/docs` and call `POST /api/demo/run` to load and analyse the demo emails. They are dated relative to today, so the demo always looks current. `POST /api/demo/reset` wipes the data and loads them again.
+
+## Real Gmail mode
+
+Use a dedicated test account, never your own mailbox.
+
+1. In Google Cloud Console create a project, enable the Gmail API and set up the OAuth consent screen as External. Add the test account as a test user.
+2. Create an OAuth client of type Desktop app and put its client id and secret in `.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`).
+3. Run `uv run python -m app.cli authorize-gmail` from `backend/`, sign in, and paste the printed `GOOGLE_REFRESH_TOKEN=...` line into `.env`.
+4. Set `DEMO_MODE=false`. Keep `LLM_PROVIDER=fake` until a real model provider is connected.
+5. Run `uv run python -m app.cli run-pipeline` to fetch and analyse the mail now. Otherwise the daily run does it.
+
+The app asks for `gmail.readonly` and `gmail.compose`. Approving a draft creates it in the Gmail account and never sends it. While the Google Cloud app is in Testing, the refresh token expires after 7 days and the step 3 command has to be repeated. Publishing the app (In production, unverified, only for your own account) avoids that.
 
 ## Security
 
