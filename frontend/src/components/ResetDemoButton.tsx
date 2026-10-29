@@ -1,4 +1,5 @@
 import { useResetDemo } from '../api/hooks'
+import { messageOf } from '../lib/errors'
 import { useNotice } from '../lib/notice'
 import { Button } from './Button'
 import { Icon } from './Icon'
@@ -13,7 +14,7 @@ export function ResetDemoButton() {
       const result = await reset.mutateAsync()
       notify('success', `Demo reset: ${result.new_emails} emails loaded and analysed.`)
     } catch (error) {
-      notify('error', error instanceof Error ? error.message : 'Something failed.')
+      notify('error', messageOf(error))
     }
   }
 

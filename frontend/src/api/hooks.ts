@@ -23,5 +23,6 @@ export const useEditDraft = () =>
   useAction(({ id, body }: { id: number; body: string }) => api.editDraft(id, body))
 export const useApproveDraft = () => useAction(api.approveDraft)
 export const useDiscardDraft = () => useAction(api.discardDraft)
+export const useRestoreDraft = () => useAction(api.restoreDraft)
 export const useRunDemo = () => useAction(api.runDemo)
 export const useResetDemo = () => useAction(api.resetDemo)

@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import type { Draft, Email } from '../api/client'
 import { useApproveDraft, useDiscardDraft, useEditDraft } from '../api/hooks'
+import { messageOf } from '../lib/errors'
 import { useNotice } from '../lib/notice'
 import { SectionLabel } from './Card'
 import { Button } from './Button'
 import { Chip } from './Chip'
 import { Icon } from './Icon'
+import { UndoButton } from './UndoButton'
 
 function DraftState({ status }: { status: Draft['status'] }) {
   if (status === 'approved') return <Chip variant="done" icon="check">Created in mailbox</Chip>
   if (status === 'discarded') return <Chip variant="muted" icon="x">Discarded</Chip>
   return <Chip variant="ready" icon="draft">Waiting for review</Chip>
 }
-
-const messageOf = (error: unknown) => (error instanceof Error ? error.message : 'Something failed.')
 
 // The reply draft written by the model, which the reviewer edits, approves or discards.
 // Approving creates the draft in the mailbox. The email is never sent from here.
@@ -88,6 +88,7 @@ export function DraftEditor({
           <Icon name="x" />
           Discard
         </Button>
+        {draft.status === 'discarded' && <UndoButton email={email} draftId={draft.id} />}
       </div>
       {!big && (
         <p className="text-[13px] text-fg-muted">

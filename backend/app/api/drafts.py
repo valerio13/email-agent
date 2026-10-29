@@ -39,3 +39,9 @@ def approve_draft(draft_id: int, services: ServicesDep) -> Draft:
 def discard_draft(draft_id: int, services: ServicesDep) -> Draft:
     """Mark a pending draft as discarded."""
     return services.drafts.discard(draft_id)
+
+
+@router.post("/{draft_id}/restore")
+def restore_draft(draft_id: int, services: ServicesDep) -> Draft:
+    """Undo a discard: the draft goes back to waiting for review. Approved ones cannot return."""
+    return services.drafts.restore(draft_id)

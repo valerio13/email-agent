@@ -15,7 +15,7 @@ from app.core.config import get_settings
 from app.db.session import get_session_factory
 from app.factory import get_llm_provider, get_mail_provider
 from app.scheduler import create_scheduler
-from app.services.drafts import DraftNotFoundError, DraftNotPendingError
+from app.services.drafts import DraftNotDiscardedError, DraftNotFoundError, DraftNotPendingError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,6 +58,11 @@ def draft_not_found(request: Request, exc: DraftNotFoundError) -> JSONResponse:
 
 @app.exception_handler(DraftNotPendingError)
 def draft_not_pending(request: Request, exc: DraftNotPendingError) -> JSONResponse:
+    return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+
+@app.exception_handler(DraftNotDiscardedError)
+def draft_not_discarded(request: Request, exc: DraftNotDiscardedError) -> JSONResponse:
     return JSONResponse(status_code=409, content={"detail": str(exc)})
 
 

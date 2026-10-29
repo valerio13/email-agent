@@ -33,6 +33,7 @@ describe('accessibility', () => {
   })
 
   it('has no violations in Metrics', async () => {
+    await import('./views/Metrics')
     const user = userEvent.setup()
     new FakeApi().install()
     renderApp(App)

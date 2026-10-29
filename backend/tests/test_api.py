@@ -137,6 +137,30 @@ def test_discarded_draft_leaves_the_pending_list(loaded_client, mail):
     assert len(loaded_client.get("/api/drafts").json()) == 20
 
 
+def test_a_discarded_draft_can_be_restored(loaded_client):
+    draft_id = loaded_client.get("/api/drafts").json()[0]["draft"]["id"]
+    loaded_client.post(f"/api/drafts/{draft_id}/discard")
+    assert len(loaded_client.get("/api/drafts").json()) == 20
+
+    restored = loaded_client.post(f"/api/drafts/{draft_id}/restore")
+
+    assert restored.status_code == 200
+    assert restored.json()["status"] == "proposed"
+    assert len(loaded_client.get("/api/drafts").json()) == 21
+
+
+def test_restoring_a_draft_that_was_not_discarded_returns_conflict(loaded_client):
+    pending_id, approved_id = [
+        item["draft"]["id"] for item in loaded_client.get("/api/drafts").json()[:2]
+    ]
+    loaded_client.post(f"/api/drafts/{approved_id}/approve")
+    for draft_id in (pending_id, approved_id):
+        response = loaded_client.post(f"/api/drafts/{draft_id}/restore")
+        assert response.status_code == 409
+        assert "not discarded" in response.json()["detail"]
+    assert loaded_client.post("/api/drafts/9999/restore").status_code == 404
+
+
 def test_deciding_twice_returns_conflict(loaded_client):
     draft_id = loaded_client.get("/api/drafts").json()[0]["draft"]["id"]
     loaded_client.post(f"/api/drafts/{draft_id}/approve")

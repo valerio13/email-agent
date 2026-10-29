@@ -147,6 +147,16 @@ export class FakeApi {
     return json(item.draft)
   }
 
+  private restore(id: number) {
+    const item = this.items.find((entry) => entry.draft?.id === id)
+    if (!item?.draft) return json({ detail: `Draft ${id} does not exist.` }, 404)
+    if (item.draft.status !== 'discarded') {
+      return json({ detail: `Draft ${id} is not discarded (it is ${item.draft.status}).` }, 409)
+    }
+    item.draft = { ...item.draft, status: 'proposed' }
+    return json(item.draft)
+  }
+
   fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     if (this.offline) throw new TypeError('Failed to fetch')
     const method = init?.method ?? 'GET'
@@ -163,7 +173,7 @@ export class FakeApi {
       return json({ new_emails: this.items.length, analysed: this.items.length })
     }
 
-    const draftRoute = path.match(/^\/drafts\/(\d+)(?:\/(approve|discard))?$/)
+    const draftRoute = path.match(/^\/drafts\/(\d+)(?:\/(approve|discard|restore))?$/)
     if (draftRoute) {
       const id = Number(draftRoute[1])
       if (method === 'PATCH') {
@@ -174,6 +184,7 @@ export class FakeApi {
       }
       if (draftRoute[2] === 'approve') return this.decide(id, 'approved')
       if (draftRoute[2] === 'discard') return this.decide(id, 'discarded')
+      if (draftRoute[2] === 'restore') return this.restore(id)
     }
     return json({ detail: 'Not found' }, 404)
   }

@@ -4,6 +4,7 @@ import { Button } from '../components/Button'
 import { Card, Well } from '../components/Card'
 import { EmptyState } from '../components/EmptyState'
 import { StatusChip } from '../components/StatusChip'
+import { UndoButton } from '../components/UndoButton'
 import { formatShort, nameOf } from '../lib/format'
 
 // Human review: every draft waiting for a decision, next to the email it answers, and below
@@ -74,7 +75,10 @@ export function Drafts() {
                 <strong>{email.subject}</strong>{' '}
                 <span className="text-fg-muted">to {nameOf(email.sender)}</span>
               </span>
-              <StatusChip status={draft?.status} />
+              <span className="flex flex-wrap items-center gap-2.5">
+                <StatusChip status={draft?.status} />
+                {draft?.status === 'discarded' && <UndoButton email={email} draftId={draft.id} />}
+              </span>
             </div>
           ))}
         </Card>

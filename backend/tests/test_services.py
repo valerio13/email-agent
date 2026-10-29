@@ -20,7 +20,12 @@ from app.providers.mail.gmail import GmailMailProvider
 from app.services.analysis import AnalysisService
 from app.services.demo import DemoService
 from app.services.digest import DigestService
-from app.services.drafts import DraftNotFoundError, DraftNotPendingError, DraftService
+from app.services.drafts import (
+    DraftNotDiscardedError,
+    DraftNotFoundError,
+    DraftNotPendingError,
+    DraftService,
+)
 from app.services.ingest import IngestService
 from app.services.metrics import MINUTES_PER_DRAFT, MINUTES_PER_EMAIL, MetricsService
 from app.services.pipeline import PipelineService
@@ -222,6 +227,34 @@ def test_discard_does_not_touch_the_mailbox(analysed_session, mail):
     draft = service.list_pending()[0].draft
     assert service.discard(draft.id).status == DraftStatus.DISCARDED
     assert mail.created_drafts == {}
+
+
+def test_a_discarded_draft_can_be_restored_with_its_text(analysed_session, mail):
+    service = DraftService(analysed_session, mail)
+    draft = service.list_pending()[0].draft
+    service.edit(draft.id, "My own wording.")
+    service.discard(draft.id)
+    assert len(service.list_pending()) == 20
+
+    restored = service.restore(draft.id)
+
+    assert restored.status == DraftStatus.PROPOSED
+    assert restored.body == "My own wording."
+    assert len(service.list_pending()) == 21
+    # Restoring is not approving: nothing reached the mailbox.
+    assert mail.created_drafts == {}
+
+
+def test_only_a_discarded_draft_can_be_restored(analysed_session, mail):
+    service = DraftService(analysed_session, mail)
+    pending_id, approved_id = [item.draft.id for item in service.list_pending()[:2]]
+    service.approve(approved_id)
+    # One is still pending and one is approved (it already exists in the mailbox).
+    for draft_id in (pending_id, approved_id):
+        with pytest.raises(DraftNotDiscardedError):
+            service.restore(draft_id)
+    with pytest.raises(DraftNotFoundError):
+        service.restore(9999)
 
 
 def test_a_decided_draft_cannot_change_again(analysed_session, mail):

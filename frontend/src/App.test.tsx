@@ -15,6 +15,9 @@ describe('App', () => {
   })
 
   it('switches sections with the mouse', async () => {
+    // Metrics is loaded lazily with Recharts. Loading it first keeps a slow machine from
+    // running out of the time that the screen is given to show it.
+    await import('./views/Metrics')
     const user = userEvent.setup()
     new FakeApi().install()
     renderApp(App)

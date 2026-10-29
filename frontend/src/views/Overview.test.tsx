@@ -67,6 +67,25 @@ describe('Overview', () => {
     expect(within(ai).getByRole('textbox')).toHaveValue('Hi Priya,\n\nThanks for reaching out.')
   })
 
+  it('lets a discarded draft be undone from its AI card', async () => {
+    const user = userEvent.setup()
+    const api = new FakeApi().install()
+    api.decideBehindTheScenes(1, 'discarded')
+    renderWithProviders(<Overview onOpenDrafts={() => {}} />)
+
+    const ai = await screen.findByRole('region', { name: /^AI analysis/ })
+    // A discarded draft is locked until it is restored.
+    expect(within(ai).getByRole('textbox')).toBeDisabled()
+    expect(within(ai).getByRole('button', { name: 'Approve and create draft' })).toBeDisabled()
+
+    await user.click(within(ai).getByRole('button', { name: 'Undo discard' }))
+
+    await waitFor(() => expect(within(ai).getByRole('textbox')).toBeEnabled())
+    expect(within(ai).getByText('Waiting for review')).toBeInTheDocument()
+    expect(within(ai).queryByRole('button', { name: 'Undo discard' })).not.toBeInTheDocument()
+    expect(api.writes()).toEqual(['POST /drafts/1/restore'])
+  })
+
   it('says so when an email needs no reply', async () => {
     const user = userEvent.setup()
     new FakeApi().install()

@@ -16,6 +16,10 @@ class DraftNotPendingError(Exception):
     """The draft was already approved or discarded, so it can no longer change."""
 
 
+class DraftNotDiscardedError(Exception):
+    """The draft was not discarded, so there is nothing to restore."""
+
+
 class DraftService:
     """Applies the reviewer's decisions. Approving creates the draft in the mailbox, never sends."""
 
@@ -59,6 +63,22 @@ class DraftService:
         discarded = self._drafts.set_status(draft_id, DraftStatus.DISCARDED)
         self._session.commit()
         return discarded
+
+    def restore(self, draft_id: int) -> Draft:
+        """Put a discarded draft back in the review list, with its text as it was.
+
+        An approved draft cannot be restored: it already exists in the mailbox.
+        """
+        draft = self._drafts.get(draft_id)
+        if draft is None:
+            raise DraftNotFoundError(f"Draft {draft_id} does not exist.")
+        if draft.status != DraftStatus.DISCARDED:
+            raise DraftNotDiscardedError(
+                f"Draft {draft_id} is not discarded (it is {draft.status})."
+            )
+        restored = self._drafts.set_status(draft_id, DraftStatus.PROPOSED)
+        self._session.commit()
+        return restored
 
     def _get_pending(self, draft_id: int) -> Draft:
         draft = self._drafts.get(draft_id)

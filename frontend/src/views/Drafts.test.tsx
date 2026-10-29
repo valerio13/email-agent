@@ -80,6 +80,59 @@ describe('Drafts', () => {
     expect(within(screen.getByRole('region', { name: 'Reviewed' })).getByText('Discarded')).toBeInTheDocument()
   })
 
+  it('undoes a discard from the Reviewed list and brings the draft back as it was', async () => {
+    const user = userEvent.setup()
+    const api = new FakeApi().install()
+    renderWithProviders(<Drafts />)
+
+    const card = (await screen.findAllByRole('article'))[1]
+    await user.click(within(card).getByRole('button', { name: 'Discard' }))
+    const reviewed = await screen.findByRole('region', { name: 'Reviewed' })
+
+    await user.click(within(reviewed).getByRole('button', { name: 'Undo discard' }))
+
+    expect(
+      await screen.findByText('Draft for "Quote for the Q4 website redesign" is back in review.'),
+    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '2 drafts waiting for you' })).toBeInTheDocument()
+    expect(api.writes()).toEqual(['POST /drafts/2/discard', 'POST /drafts/2/restore'])
+    const restored = screen.getAllByRole('article')[1]
+    expect(within(restored).getByRole('textbox')).toHaveValue('Hi Priya,\n\nThanks for reaching out.')
+  })
+
+  it('offers no undo for an approved draft', async () => {
+    const user = userEvent.setup()
+    new FakeApi().install()
+    renderWithProviders(<Drafts />)
+
+    const card = (await screen.findAllByRole('article'))[0]
+    await user.click(within(card).getByRole('button', { name: 'Approve and create draft' }))
+    const reviewed = await screen.findByRole('region', { name: 'Reviewed' })
+
+    expect(within(reviewed).getByText('In mailbox')).toBeInTheDocument()
+    expect(within(reviewed).queryByRole('button', { name: 'Undo discard' })).not.toBeInTheDocument()
+  })
+
+  it('shows the API message when the draft changed meanwhile, and refreshes', async () => {
+    const user = userEvent.setup()
+    const api = new FakeApi().install()
+    renderWithProviders(<Drafts />)
+
+    const card = (await screen.findAllByRole('article'))[1]
+    await user.click(within(card).getByRole('button', { name: 'Discard' }))
+    const reviewed = await screen.findByRole('region', { name: 'Reviewed' })
+    api.decideBehindTheScenes(2, 'approved')
+
+    await user.click(within(reviewed).getByRole('button', { name: 'Undo discard' }))
+
+    expect(await screen.findByText('Draft 2 is not discarded (it is approved).')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('region', { name: 'Reviewed' })).queryByRole('button', { name: 'Undo discard' }),
+      ).not.toBeInTheDocument(),
+    )
+  })
+
   it('cannot approve an empty draft', async () => {
     const user = userEvent.setup()
     new FakeApi().install()

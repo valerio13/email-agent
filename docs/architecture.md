@@ -107,7 +107,7 @@ Each service takes the database session and its providers through the constructo
 | `IngestService` | `run()` | Stores the emails the database does not have yet and returns how many were new. |
 | `AnalysisService` | `run()` | Analyses every email without an analysis and creates a draft when a reply is needed. Each email has its own transaction: if the model fails on one, that email stays pending and is retried on the next run. |
 | `DigestService` | `build()` | Returns a `Digest` of the latest day of mail (`day`): total, counts per category, pending drafts (all days) and that day's emails, each with its draft if it has one, highest priority first and newest first within each priority. |
-| `DraftService` | `list_pending()`, `edit()`, `approve()`, `discard()` | `list_pending()` returns the drafts waiting for review of every day, each with its email and analysis, most urgent first. Approving creates the draft in the mailbox first and marks it approved afterwards, so a mailbox failure leaves the database unchanged. A draft that was already approved or discarded cannot change again. |
+| `DraftService` | `list_pending()`, `edit()`, `approve()`, `discard()`, `restore()` | `list_pending()` returns the drafts waiting for review of every day, each with its email and analysis, most urgent first. Approving creates the draft in the mailbox first and marks it approved afterwards, so a mailbox failure leaves the database unchanged. A draft that was already approved or discarded cannot be edited, approved or discarded again. A discarded draft can be restored, because nothing reached the mailbox. An approved one cannot: it already exists there. |
 | `MetricsService` | `build()` | Returns `Metrics` for the 7 days that end on the day of the newest email: emails per day, emails processed, drafts created, drafts waiting for review and the estimated time saved (2 minutes per email and 6 per draft, both returned in the response). |
 | `PipelineService` | `run()` | The daily run: ingest, then analysis. Used by the scheduler and by the demo service. |
 | `DemoService` | `run()`, `reset()` | Demo mode only. `run()` runs the pipeline, but first starts over if the mailbox now offers mail from a later day than the stored one, so the dashboard always shows current dates. `reset()` deletes every email, analysis and draft and loads the demo emails again. |
@@ -126,6 +126,7 @@ FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted
 | `PATCH /api/drafts/{id}` | Edit the text of a pending draft |
 | `POST /api/drafts/{id}/approve` | Create the draft in the mailbox and mark it approved |
 | `POST /api/drafts/{id}/discard` | Discard a pending draft |
+| `POST /api/drafts/{id}/restore` | Undo a discard: the draft waits for review again, with its text. Approved drafts cannot be restored (409) |
 | `GET /api/config` | Whether the app runs in demo mode, so the dashboard shows its demo buttons only then |
 | `POST /api/demo/run` | Run the pipeline on demand, reloading the demo emails if they are from an earlier day. Demo mode only (403 otherwise) |
 | `POST /api/demo/reset` | Delete all data and load the demo emails again. Demo mode only (403 otherwise) |
@@ -159,6 +160,7 @@ The Overview view holds the state (filter, search, selected email) and reads the
 The Drafts view is the human review. It lists every pending draft, of any day, next to the email it answers, with the same AI card and editor as the Overview, and below them the drafts already decided. In both places the reviewer edits the text, approves or discards:
 
 - Edits are saved to the API when the text box loses focus (`PATCH /api/drafts/{id}`), so they survive choosing another email or reloading. Approving saves any unsaved change first.
+- A discarded draft shows an Undo discard button, both in the AI card and in the Reviewed list, so a mistaken click is not final. Approved drafts have no undo: they already exist in the mailbox.
 - Approving creates the draft in the mailbox and never sends. A short message under the tabs confirms what happened for seven seconds.
 - Every action refreshes all the queries, also after a failure. A 404 or 409 (for example a draft decided in another window) shows the API's message and brings the screen up to date.
 - A request that cannot reach the API shows "Could not reach the API." after one quick retry.
