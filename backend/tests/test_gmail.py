@@ -138,6 +138,49 @@ def test_an_html_only_email_is_read_as_text_without_scripts_or_styles():
     assert "<" not in body
 
 
+STYLESHEET = (
+    ".o_layout .o_mail_wrapper a.btn { font-size: var(--size); padding-left: var(--pad); }\n"
+    ".o_layout .o_mail_wrapper h1 { font-size: 28px; color: rgb(0, 0, 0); }\n"
+    ".o_layout .o_mail_wrapper p { font-size: 16px; margin-bottom: 16px; }\n"
+)
+
+
+def test_a_stylesheet_in_the_plain_text_part_is_replaced_by_the_html_text():
+    # This is how an Odoo newsletter arrives: its plain text part starts with its stylesheet.
+    plain = f"Join our trainings\n{STYLESHEET}\nWe invite you to a free training in Valencia.\n"
+    html = (
+        "<html><head><title>Odoo</title></head>"
+        "<body><p>We invite you to a free training in Valencia.</p></body></html>"
+    )
+    gmail = FakeGmail(message("msg-1", text=plain, html=html))
+
+    body = GmailMailProvider(gmail).fetch_new()[0].body
+
+    assert body == "We invite you to a free training in Valencia."
+
+
+def test_a_stylesheet_is_cut_out_when_there_is_no_html_version():
+    plain = f"Join our trainings\n{STYLESHEET}\nWe invite you to a free training in Valencia.\n"
+    gmail = FakeGmail(message("msg-1", text=plain))
+
+    body = GmailMailProvider(gmail).fetch_new()[0].body
+
+    assert "font-size" not in body
+    assert "We invite you to a free training in Valencia." in body
+
+
+def test_one_line_that_looks_like_css_does_not_make_an_email_a_stylesheet():
+    plain = "Here is the setting I use:\nconfig { retries: 3; }\nCan you check it?"
+    gmail = FakeGmail(message("msg-1", text=plain, html="<p>Something else</p>"))
+    assert GmailMailProvider(gmail).fetch_new()[0].body == plain
+
+
+def test_a_list_of_links_at_the_end_of_the_text_is_dropped():
+    plain = "Read the offer here [1].\n\n[1] https://example.com/offer\n[2] https://example.com/unsubscribe\n"
+    gmail = FakeGmail(message("msg-1", text=plain))
+    assert GmailMailProvider(gmail).fetch_new()[0].body == "Read the offer here [1]."
+
+
 def test_encoded_subjects_and_missing_subjects_are_handled():
     gmail = FakeGmail(
         message("msg-1", subject="=?UTF-8?B?UHLDvGZ1bmcgZGVyIFJlY2hudW5n?="),

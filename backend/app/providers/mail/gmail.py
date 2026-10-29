@@ -25,6 +25,11 @@ SCOPES = [
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 # A very long email would cost a lot to analyse and says little more than its first pages.
 MAX_BODY_CHARS = 20_000
+# A CSS rule such as ".btn { font-size: 12px; }". Some tools (Odoo, for one) put their whole
+# stylesheet into the plain text part of a newsletter, and the email becomes unreadable.
+CSS_RULE = re.compile(r"[^{}\n]+\{[^{}]*:[^{}]*;[^{}]*\}")
+# A line that only lists a link, as in "[3] https://example.com/x", left by HTML to text tools.
+LINK_LINE = re.compile(r"^\[\d+\]\s+https?://\S+\s*$", re.MULTILINE)
 
 
 def build_gmail_service(settings: Settings) -> Any:
@@ -79,6 +84,7 @@ class _TextExtractor(HTMLParser):
     """Keeps the visible text of an HTML email: no tags, scripts or styles."""
 
     BREAKS = {"br", "p", "div", "tr", "li", "h1", "h2", "h3"}
+    HIDDEN = {"script", "style", "head", "title"}
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -86,13 +92,13 @@ class _TextExtractor(HTMLParser):
         self._hidden = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag in ("script", "style"):
+        if tag in self.HIDDEN:
             self._hidden += 1
         elif tag in self.BREAKS:
             self._parts.append("\n")
 
     def handle_endtag(self, tag: str) -> None:
-        if tag in ("script", "style") and self._hidden:
+        if tag in self.HIDDEN and self._hidden:
             self._hidden -= 1
 
     def handle_data(self, data: str) -> None:
@@ -104,16 +110,31 @@ class _TextExtractor(HTMLParser):
         return re.sub(r"\n\s*\n+", "\n\n", joined).strip()
 
 
+def _looks_like_css(text: str) -> bool:
+    return len(CSS_RULE.findall(text)) >= 3
+
+
+def _html_text(markup: str) -> str:
+    extractor = _TextExtractor()
+    extractor.feed(markup)
+    return extractor.text()
+
+
 def _body(payload: dict[str, Any]) -> str:
-    """The plain text of an email, or the text of its HTML when it has no plain version."""
+    """The readable text of an email.
+
+    The plain text part is used, unless it is missing or is really a stylesheet: then the text of
+    the HTML part is used instead, and if there is none the CSS rules are cut out.
+    """
     text = _find_part(payload, "text/plain")
-    if text is None:
-        markup = _find_part(payload, "text/html")
-        if markup is None:
-            return ""
-        extractor = _TextExtractor()
-        extractor.feed(markup)
-        text = extractor.text()
+    markup = _find_part(payload, "text/html")
+    if text is None or _looks_like_css(text):
+        if markup is not None:
+            text = _html_text(markup)
+        else:
+            text = CSS_RULE.sub("", text or "")
+    text = LINK_LINE.sub("", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()[:MAX_BODY_CHARS]
 
 
