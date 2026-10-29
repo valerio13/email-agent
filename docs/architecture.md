@@ -81,9 +81,9 @@ Mail and LLM access sit behind two small interfaces, so the rest of the app neve
 | Interface | Operations | Implementations |
 |---|---|---|
 | `MailProvider` | `fetch_new()`, `create_draft(email, body)` | `DemoMailProvider` (reads `demo/emails.json`, dates them relative to now, keeps drafts in memory) and `GmailMailProvider` (Gmail API) |
-| `LLMProvider` | `analyze_email(email)` returns a validated `EmailAnalysis` | `FakeLLMProvider` (keyword rules, no API key) |
+| `LLMProvider` | `analyze_email(email)` returns a validated `EmailAnalysis` | `FakeLLMProvider` (keyword rules, no API key) and `LangChainLLMProvider` (a chat model reached through OpenRouter) |
 
-`MailProvider` has no send operation. The LangChain implementation of `LLMProvider` will implement the same interface as the fake one.
+`MailProvider` has no send operation. `LangChainLLMProvider` sends the rules and the email (as untrusted data inside a block whose closing tag is removed from the body) to the model, which answers through a JSON schema, not tools. Pydantic validates the answer into an `EmailAnalysis`; if the model fails or answers something invalid, `AnalysisService` leaves that email for the next run.
 
 `demo/emails.json` holds 36 fictitious emails spread over 7 days (7 urgent, 14 needing a reply, 15 informational), used by demo mode and the tests. Instead of a date, each entry has `days_ago` and `time_utc`. `DemoMailProvider` turns them into real dates every time it fetches, so the demo never looks stale. An email whose time has not come yet today is moved to the day before, so no email comes from the future. Tests pass a fixed `now`.
 
@@ -106,13 +106,13 @@ Each service takes the database session and its providers through the constructo
 |---|---|---|
 | `IngestService` | `run()` | Stores the emails the database does not have yet and returns how many were new. |
 | `AnalysisService` | `run()` | Analyses every email without an analysis and creates a draft when a reply is needed. Each email has its own transaction: if the model fails on one, that email stays pending and is retried on the next run. |
-| `DigestService` | `build()` | Returns a `Digest` of the latest day of mail (`day`): total, counts per category, pending drafts (all days) and that day's emails, each with its draft if it has one, highest priority first and newest first within each priority. |
+| `DigestService` | `build(day=None)` | Returns a `Digest` of one UTC day of mail (`day`, by default the latest one): its `previous_day` and `next_day` (the closest days with mail, to move between days), total, counts per category, pending drafts (all days) and that day's emails, each with its draft if it has one, highest priority first and newest first within each priority. |
 | `DraftService` | `list_pending()`, `edit()`, `approve()`, `discard()`, `restore()` | `list_pending()` returns the drafts waiting for review of every day, each with its email and analysis, most urgent first. Approving creates the draft in the mailbox first and marks it approved afterwards, so a mailbox failure leaves the database unchanged. A draft that was already approved or discarded cannot be edited, approved or discarded again. A discarded draft can be restored, because nothing reached the mailbox. An approved one cannot: it already exists there. |
 | `MetricsService` | `build()` | Returns `Metrics` for the 7 days that end on the day of the newest email: emails per day, emails processed, drafts created, drafts waiting for review and the estimated time saved (2 minutes per email and 6 per draft, both returned in the response). |
 | `PipelineService` | `run()` | The daily run: ingest, then analysis. Used by the scheduler and by the demo service. |
 | `DemoService` | `run()`, `reset()` | Demo mode only. `run()` runs the pipeline, but first starts over if the mailbox now offers mail from a later day than the stored one, so the dashboard always shows current dates. `reset()` deletes every email, analysis and draft and loads the demo emails again. |
 
-`app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. Outside it, it builds the Gmail mailbox, and the model stays fake (`LLM_PROVIDER=fake`) until the LangChain provider exists, so a real mailbox can be tried first. `build_services(session, mail, llm)` assembles the services on one session.
+`app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. Outside it, it builds the Gmail mailbox, and the model is the fake one with `LLM_PROVIDER=fake` (a real mailbox can be tried for free) or the OpenRouter one with `LLM_PROVIDER=openrouter`. Any other value is an error. `build_services(session, mail, llm)` assembles the services on one session.
 
 ## API
 
@@ -120,7 +120,7 @@ FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/digest` | The latest day of mail: totals, counts per category, pending drafts and the day's emails by priority, each with its draft |
+| `GET /api/digest` | One day of mail, the latest unless `?day=YYYY-MM-DD` is given (422 if it is not a date), with the days before and after that have mail: totals, counts per category, pending drafts and the day's emails by priority, each with its draft |
 | `GET /api/drafts` | Drafts waiting for review, each with its email and analysis, most urgent first |
 | `GET /api/metrics` | Emails per day for the last 7 days, drafts created, drafts waiting and estimated time saved |
 | `PATCH /api/drafts/{id}` | Edit the text of a pending draft |
@@ -155,7 +155,7 @@ src/
   styles/      tokens.css
 ```
 
-The Overview view holds the state (filter, search, selected email) and reads the digest. It shows the summary tiles, which double as filters, the inbox by priority and, beside it, two separate cards for the selected email: the email as it arrived, and the AI analysis with a purple mark so the reader always knows what the model produced. A day with no analysed emails, a loading digest and a failed request each get their own state.
+The Overview view holds the state (filter, search, selected email) and reads the digest. It shows the summary tiles, which double as filters, two arrows beside the date to move to the previous or next day with mail, the inbox by priority and, beside it, two separate cards for the selected email: the email as it arrived, and the AI analysis with a purple mark so the reader always knows what the model produced. A day with no analysed emails, a loading digest and a failed request each get their own state.
 
 The Drafts view is the human review. It lists every pending draft, of any day, next to the email it answers, with the same AI card and editor as the Overview, and below them the drafts already decided. In both places the reviewer edits the text, approves or discards:
 
@@ -196,7 +196,7 @@ Jobs are kept in memory, so a run missed while the process was down is not repla
 ## Design rules
 
 1. `MailProvider` has no send operation, and a test guarantees it.
-2. The LLM provider is swappable and implemented with LangChain (`providers/llm/langchain_provider.py`). Vendor and model come from `LLM_PROVIDER` and `LLM_MODEL`. A fake provider is used in tests and demo mode.
+2. The LLM provider is swappable and implemented with LangChain (`providers/llm/langchain_provider.py`). The provider comes from `LLM_PROVIDER` (`fake` or `openrouter`) and the model, an OpenRouter id, from `LLM_MODEL`. A fake provider is used in tests and demo mode.
 3. Dependencies are injected through constructors. A single factory reads the settings and builds the services, so services never know which vendor is behind `LLMProvider`.
 4. Email content is untrusted input. The LLM has no tools and its output is validated before it is stored.
 5. Configuration comes only from environment variables.

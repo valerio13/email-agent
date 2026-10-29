@@ -8,7 +8,9 @@ import { type Filter, SummaryCard } from '../components/SummaryCard'
 
 // The first screen: the day's summary, the inbox by priority and the selected email.
 export function Overview({ onOpenDrafts }: { onOpenDrafts: () => void }) {
-  const { data: digest, error, isPending, refetch } = useDigest()
+  // undefined is the latest day. The arrows in the summary pick another one.
+  const [day, setDay] = useState<string>()
+  const { data: digest, error, isPending, refetch } = useDigest(day)
   const runDemo = useRunDemo()
   const { data: config } = useConfig()
   const [filter, setFilter] = useState<Filter>('all')
@@ -72,6 +74,7 @@ export function Overview({ onOpenDrafts }: { onOpenDrafts: () => void }) {
         filter={filter}
         onFilter={setFilter}
         onOpenDrafts={onOpenDrafts}
+        onDay={setDay}
       />
       <div className="grid grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] items-start gap-7 max-[1040px]:grid-cols-1">
         <InboxCard

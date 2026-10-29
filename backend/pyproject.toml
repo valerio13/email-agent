@@ -12,9 +12,9 @@ dependencies = [
     "psycopg[binary]>=3.2",
     "apscheduler>=3.10,<4",
     "langchain>=0.3",
-    "langchain-anthropic>=0.3",
     "google-api-python-client>=2.150",
     "google-auth-oauthlib>=1.2",
+    "langchain-openrouter>=0.2",
 ]
 
 [dependency-groups]

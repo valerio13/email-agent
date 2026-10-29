@@ -22,9 +22,11 @@ class Settings(BaseSettings):
     )
 
     database_url: SecretStr
+    # "fake" (keyword rules, no key) or "openrouter" (any model through OpenRouter).
     llm_provider: str
+    # An OpenRouter model id such as "anthropic/claude-haiku-5.5". Ignored by the fake model.
     llm_model: str
-    anthropic_api_key: SecretStr = SecretStr("")
+    openrouter_api_key: SecretStr = SecretStr("")
     google_client_id: str = ""
     google_client_secret: SecretStr = SecretStr("")
     # Printed once by `python -m app.cli authorize-gmail`. Gmail mode needs all three Google values.

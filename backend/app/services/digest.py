@@ -1,4 +1,6 @@
-"""Digest service: builds the prioritized summary of the latest day of analysed mail."""
+"""Digest service: builds the prioritized summary of one day of analysed mail."""
+
+from datetime import date
 
 from sqlalchemy.orm import Session
 
@@ -23,10 +25,15 @@ class DigestService:
         self._analyses = AnalysisRepository(session)
         self._drafts = DraftRepository(session)
 
-    def build(self) -> Digest:
-        """Return the digest of the day of the newest email, with each email's draft."""
+    def build(self, day: date | None = None) -> Digest:
+        """Return the digest of one UTC day, with each email's draft.
+
+        Without `day` it is the day of the newest email. A day with no mail gives an empty digest.
+        """
         rows = self._analyses.list_with_emails()
-        day = max((utc_day(email.received_at) for email, _ in rows), default=None)
+        days = sorted({utc_day(email.received_at) for email, _ in rows})
+        if day is None and days:
+            day = days[-1]
         rows = [(email, analysis) for email, analysis in rows if utc_day(email.received_at) == day]
         drafts = self._drafts.latest_for_emails([email.id for email, _ in rows])
         items = sort_for_review(
@@ -38,6 +45,8 @@ class DigestService:
 
         return Digest(
             day=day,
+            previous_day=max((d for d in days if d < day), default=None),
+            next_day=min((d for d in days if d > day), default=None),
             total=len(items),
             counts={
                 category: sum(item.analysis.category == category for item in items)

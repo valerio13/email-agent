@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { FakeApi } from '../test/fakeApi'
+import { FakeApi, sampleItems } from '../test/fakeApi'
 import { renderWithProviders } from '../test/render'
 import { Overview } from './Overview'
 
@@ -135,5 +135,37 @@ describe('Overview', () => {
     api.offline = false
     await user.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByRole('heading', { name: /urgent email/ })).toBeInTheDocument()
+  })
+
+  it('moves between the days that have mail', async () => {
+    const user = userEvent.setup()
+    // The newsletter arrived the day before the other two emails.
+    const items = sampleItems()
+    items[2] = { ...items[2], email: { ...items[2].email, received_at: '2026-10-25T05:00:00Z' } }
+    const api = new FakeApi({ items }).install()
+    renderWithProviders(<Overview onOpenDrafts={() => {}} />)
+
+    expect(await screen.findByText(/Daily summary.*26 October/)).toBeInTheDocument()
+    expect(rowNames()).toHaveLength(2)
+    expect(screen.getByRole('button', { name: 'Next day with mail' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Previous day with mail' }))
+    expect(await screen.findByText(/Daily summary.*25 October/)).toBeInTheDocument()
+    expect(rowNames()).toHaveLength(1)
+    expect(rowNames()[0]).toContain('Your weekly product newsletter')
+    expect(screen.getByRole('button', { name: 'Previous day with mail' })).toBeDisabled()
+    expect(api.calls.map((call) => call.path)).toContain('/digest?day=2026-10-25')
+
+    await user.click(screen.getByRole('button', { name: 'Next day with mail' }))
+    expect(await screen.findByText(/Daily summary.*26 October/)).toBeInTheDocument()
+    expect(rowNames()).toHaveLength(2)
+  })
+
+  it('has nowhere to go when all the mail is from one day', async () => {
+    new FakeApi().install()
+    renderWithProviders(<Overview onOpenDrafts={() => {}} />)
+
+    expect(await screen.findByRole('button', { name: 'Previous day with mail' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Next day with mail' })).toBeDisabled()
   })
 })

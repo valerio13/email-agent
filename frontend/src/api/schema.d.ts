@@ -13,7 +13,10 @@ export interface paths {
         };
         /**
          * Get Digest
-         * @description Totals, counts per category, pending drafts and the emails of the latest day by priority.
+         * @description Totals, counts per category, pending drafts and the emails of one day by priority.
+         *
+         *     The day is the latest one with mail unless `day` is given. `previous_day` and `next_day`
+         *     name the closest days with mail, so a client can move between days.
          */
         get: operations["get_digest_api_digest_get"];
         put?: never;
@@ -241,6 +244,10 @@ export interface components {
         Digest: {
             /** Day */
             day: string | null;
+            /** Previous Day */
+            previous_day: string | null;
+            /** Next Day */
+            next_day: string | null;
             /** Total */
             total: number;
             /** Counts */
@@ -407,7 +414,10 @@ export type $defs = Record<string, never>;
 export interface operations {
     get_digest_api_digest_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description UTC day, such as 2026-10-26. Default: the latest. */
+                day?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -421,6 +431,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Digest"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

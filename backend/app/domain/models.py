@@ -98,6 +98,9 @@ class Digest(BaseModel):
 
     # The UTC day the digest covers. None when there is no analysed email yet.
     day: date | None
+    # The closest days with analysed mail before and after `day`, to move between days.
+    previous_day: date | None
+    next_day: date | None
     total: int
     counts: dict[Category, int]
     # Drafts waiting for review, whatever day their email came from.

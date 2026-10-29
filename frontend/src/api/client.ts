@@ -55,7 +55,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const post = <T>(path: string) => request<T>(path, { method: 'POST' })
 
 export const api = {
-  digest: () => request<Digest>('/digest'),
+  digest: (day?: string) => request<Digest>(day ? `/digest?day=${day}` : '/digest'),
   drafts: () => request<DigestItem[]>('/drafts'),
   metrics: () => request<Metrics>('/metrics'),
   config: () => request<AppConfig>('/config'),

@@ -101,18 +101,26 @@ export class FakeApi {
     if (item?.draft) item.draft = { ...item.draft, status }
   }
 
-  private digest(): Digest {
+  // The day of an email, as the backend groups them.
+  private dayOf = (item: DigestItem) => item.email.received_at.slice(0, 10)
+
+  private digest(requested: string | null): Digest {
+    const days = [...new Set(this.items.map(this.dayOf))].sort()
+    const day = requested ?? days.at(-1) ?? null
+    const items = this.items.filter((item) => this.dayOf(item) === day)
     return {
-      day: this.items.length ? '2026-10-26' : null,
-      total: this.items.length,
+      day,
+      previous_day: days.findLast((other) => day && other < day) ?? null,
+      next_day: days.find((other) => day && other > day) ?? null,
+      total: items.length,
       counts: Object.fromEntries(
         CATEGORIES.map((category) => [
           category,
-          this.items.filter((item) => item.analysis.category === category).length,
+          items.filter((item) => item.analysis.category === category).length,
         ]),
       ) as Record<Category, number>,
       pending_drafts: this.pending().length,
-      items: this.items,
+      items,
     }
   }
 
@@ -160,11 +168,12 @@ export class FakeApi {
   fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     if (this.offline) throw new TypeError('Failed to fetch')
     const method = init?.method ?? 'GET'
-    const path = String(input).replace(/^\/api/, '')
+    const url = new URL(String(input).replace(/^\/api/, ''), 'http://fake')
+    const path = url.pathname
     const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined
-    this.calls.push({ method, path, body })
+    this.calls.push({ method, path: path + url.search, body })
 
-    if (method === 'GET' && path === '/digest') return json(this.digest())
+    if (method === 'GET' && path === '/digest') return json(this.digest(url.searchParams.get('day')))
     if (method === 'GET' && path === '/drafts') return json(this.pending())
     if (method === 'GET' && path === '/metrics') return json(this.metrics())
     if (method === 'GET' && path === '/config') return json({ demo_mode: this.demoMode })

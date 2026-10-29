@@ -4,8 +4,8 @@ Reads new mail every day, writes a prioritized summary (urgent, needs a reply, i
 
 Status: work in progress.
 
-- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory, the REST API, the daily scheduler, the dashboard and the Gmail provider.
-- Next: the LangChain model provider, then a complete Docker Compose setup.
+- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory, the REST API, the daily scheduler, the dashboard, the Gmail provider and the LangChain model provider (through OpenRouter).
+- Next: a complete Docker Compose setup.
 
 ## Architecture
 
@@ -54,10 +54,22 @@ Use a dedicated test account, never your own mailbox.
 1. In Google Cloud Console create a project, enable the Gmail API and set up the OAuth consent screen as External. Add the test account as a test user.
 2. Create an OAuth client of type Desktop app and put its client id and secret in `.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`).
 3. Run `uv run python -m app.cli authorize-gmail` from `backend/`, sign in, and paste the printed `GOOGLE_REFRESH_TOKEN=...` line into `.env`.
-4. Set `DEMO_MODE=false`. Keep `LLM_PROVIDER=fake` until a real model provider is connected.
+4. Set `DEMO_MODE=false`. Keep `LLM_PROVIDER=fake` to try the mailbox without a real model, or connect one (next section).
 5. Run `uv run python -m app.cli run-pipeline` to fetch and analyse the mail now. Otherwise the daily run does it.
 
 The app asks for `gmail.readonly` and `gmail.compose`. Approving a draft creates it in the Gmail account and never sends it. While the Google Cloud app is in Testing, the refresh token expires after 7 days and the step 3 command has to be repeated. Publishing the app (In production, unverified, only for your own account) avoids that.
+
+## Real model
+
+The model is reached through [OpenRouter](https://openrouter.ai), which gives access to many vendors with one key. In `.env` set:
+
+```
+LLM_PROVIDER=openrouter
+LLM_MODEL=anthropic/claude-haiku-5.5
+OPENROUTER_API_KEY=<a key from https://openrouter.ai/keys>
+```
+
+Any OpenRouter model that supports structured outputs works as `LLM_MODEL`. It is only used outside demo mode. The model has no tools: it answers with a structured analysis that is validated before anything is stored, and the email is handed to it as untrusted data. Each email goes to OpenRouter and the vendor behind the model, so use a test mailbox.
 
 ## Security
 

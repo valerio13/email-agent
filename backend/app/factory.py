@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings, get_settings
 from app.providers.llm.base import LLMProvider
 from app.providers.llm.fake import FakeLLMProvider
+from app.providers.llm.langchain_provider import LangChainLLMProvider, build_openrouter_model
 from app.providers.mail.base import MailProvider
 from app.providers.mail.demo import DemoMailProvider
 from app.providers.mail.gmail import GmailMailProvider, build_gmail_service
@@ -47,13 +48,15 @@ def build_mail_provider(settings: Settings) -> MailProvider:
 
 
 def build_llm_provider(settings: Settings) -> LLMProvider:
-    """Return the fake model in demo mode or when LLM_PROVIDER=fake. LangChain comes later.
+    """Return the fake model in demo mode or when LLM_PROVIDER=fake, else the real one.
 
-    LLM_PROVIDER=fake lets a real mailbox be tried before the real model is connected.
+    LLM_PROVIDER=fake lets a real mailbox be tried without spending anything on a model.
     """
     if settings.demo_mode or settings.llm_provider == "fake":
         return FakeLLMProvider()
-    raise NotImplementedError("The LangChain provider is not implemented yet.")
+    if settings.llm_provider == "openrouter":
+        return LangChainLLMProvider(build_openrouter_model(settings))
+    raise ValueError(f"Unknown LLM_PROVIDER '{settings.llm_provider}'. Use 'fake' or 'openrouter'.")
 
 
 @lru_cache

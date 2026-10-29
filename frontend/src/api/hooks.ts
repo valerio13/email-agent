@@ -1,7 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 
-export const useDigest = () => useQuery({ queryKey: ['digest'], queryFn: api.digest })
+// Without a day it is the latest one. Moving between days keeps the previous day on screen until
+// the next one arrives, so the page does not blink to a loading state.
+export const useDigest = (day?: string) =>
+  useQuery({
+    queryKey: ['digest', day ?? 'latest'],
+    queryFn: () => api.digest(day),
+    placeholderData: keepPreviousData,
+  })
 export const useDrafts = () => useQuery({ queryKey: ['drafts'], queryFn: api.drafts })
 export const useMetrics = () => useQuery({ queryKey: ['metrics'], queryFn: api.metrics })
 // How the app runs does not change while it is open, so it is read once.

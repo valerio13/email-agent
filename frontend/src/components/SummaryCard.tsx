@@ -2,6 +2,7 @@ import type { Category, Digest } from '../api/client'
 import { CATEGORIES } from '../lib/categories'
 import { formatDay } from '../lib/format'
 import { Card } from './Card'
+import { Icon } from './Icon'
 import { Tile } from './Tile'
 
 export type Filter = Category | 'all'
@@ -14,6 +15,33 @@ function headline(urgent: number, waiting: number) {
   return `${waiting} ${waiting === 1 ? 'reply is' : 'replies are'} waiting for you.`
 }
 
+const ARROW =
+  'inline-flex size-9 items-center justify-center rounded-full bg-bg text-fg shadow-raise-1 transition-shadow duration-200 enabled:hover:shadow-raise-2 enabled:active:shadow-press disabled:cursor-not-allowed disabled:bg-gray disabled:text-gray-ink disabled:shadow-none'
+
+// Moves to the closest day with mail. Without one in that direction the button is off.
+function DayArrow({
+  direction,
+  target,
+  onDay,
+}: {
+  direction: 'previous' | 'next'
+  target: string | null
+  onDay: (day: string) => void
+}) {
+  return (
+    <button
+      type="button"
+      className={ARROW}
+      disabled={!target}
+      title={target ? formatDay(target) : undefined}
+      aria-label={`${direction === 'previous' ? 'Previous' : 'Next'} day with mail`}
+      onClick={() => target && onDay(target)}
+    >
+      <Icon name={direction === 'previous' ? 'chevron-left' : 'chevron-right'} />
+    </button>
+  )
+}
+
 // The day at a glance. The figures come from the digest, which counts what the model decided.
 export function SummaryCard({
   digest,
@@ -21,12 +49,14 @@ export function SummaryCard({
   filter,
   onFilter,
   onOpenDrafts,
+  onDay,
 }: {
   digest: Digest
   day: string
   filter: Filter
   onFilter: (filter: Filter) => void
   onOpenDrafts: () => void
+  onDay: (day: string) => void
 }) {
   const waiting = digest.pending_drafts
   const review =
@@ -36,9 +66,15 @@ export function SummaryCard({
   return (
     <Card aria-labelledby="summary-heading" className="grid gap-6">
       <div>
-        <p className="text-xs font-bold tracking-[0.08em] text-fg-muted uppercase">
-          Daily summary &middot; {formatDay(day)}
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-bold tracking-[0.08em] text-fg-muted uppercase">
+            Daily summary &middot; {formatDay(day)}
+          </p>
+          <div role="group" aria-label="Choose the day" className="flex gap-2">
+            <DayArrow direction="previous" target={digest.previous_day} onDay={onDay} />
+            <DayArrow direction="next" target={digest.next_day} onDay={onDay} />
+          </div>
+        </div>
         <h2 id="summary-heading" className="mt-2.5">
           {headline(digest.counts.urgent, waiting)}
         </h2>

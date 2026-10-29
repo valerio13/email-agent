@@ -81,6 +81,21 @@ def test_digest_covers_the_latest_day_by_priority(loaded_client):
     assert digest["items"][-1]["analysis"]["priority"] == "low"
 
 
+def test_digest_moves_between_days_with_mail(loaded_client):
+    latest = loaded_client.get("/api/digest").json()
+    assert (latest["previous_day"], latest["next_day"]) == ("2026-10-25", None)
+
+    earlier = loaded_client.get("/api/digest", params={"day": "2026-10-25"}).json()
+    assert earlier["day"] == "2026-10-25"
+    assert earlier["total"] == 4
+    assert (earlier["previous_day"], earlier["next_day"]) == ("2026-10-24", "2026-10-26")
+    assert {item["email"]["received_at"][:10] for item in earlier["items"]} == {"2026-10-25"}
+
+
+def test_digest_rejects_a_day_that_is_not_a_date(loaded_client):
+    assert loaded_client.get("/api/digest", params={"day": "yesterday"}).status_code == 422
+
+
 def test_digest_items_include_the_draft_status(loaded_client):
     draft = loaded_client.get("/api/drafts").json()[0]["draft"]
     loaded_client.post(f"/api/drafts/{draft['id']}/approve")

@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
+from app.core.dates import utc_day
 from app.db.repositories import EmailRepository
 from app.domain.models import (
     Category,
@@ -15,6 +16,7 @@ from app.domain.models import (
 )
 from app.factory import build_llm_provider, build_mail_provider
 from app.providers.llm.fake import FakeLLMProvider
+from app.providers.llm.langchain_provider import LangChainLLMProvider
 from app.providers.mail.demo import DemoMailProvider
 from app.providers.mail.gmail import GmailMailProvider
 from app.services.analysis import AnalysisService
@@ -121,9 +123,35 @@ def test_digest_shows_the_decision_taken_on_a_draft(analysed_session, mail):
     assert digest.pending_drafts == 20
 
 
+def test_digest_can_cover_any_day_and_points_to_its_neighbours(analysed_session):
+    service = DigestService(analysed_session)
+    latest = service.build()
+    assert (latest.previous_day, latest.next_day) == (date(2026, 10, 25), None)
+
+    middle = service.build(date(2026, 10, 24))
+    assert middle.day == date(2026, 10, 24)
+    assert middle.total == 5
+    assert {utc_day(item.email.received_at) for item in middle.items} == {date(2026, 10, 24)}
+    assert (middle.previous_day, middle.next_day) == (date(2026, 10, 23), date(2026, 10, 25))
+    # Pending drafts count every day, not only the one on screen.
+    assert middle.pending_drafts == 21
+
+    oldest = service.build(date(2026, 10, 20))
+    assert (oldest.previous_day, oldest.next_day) == (None, date(2026, 10, 21))
+
+
+def test_digest_of_a_day_without_mail_is_empty_but_points_to_the_days_with_mail(analysed_session):
+    digest = DigestService(analysed_session).build(date(2026, 1, 1))
+    assert digest.day == date(2026, 1, 1)
+    assert digest.total == 0
+    assert digest.items == []
+    assert (digest.previous_day, digest.next_day) == (None, date(2026, 10, 20))
+
+
 def test_digest_is_empty_without_mail(session):
     digest = DigestService(session).build()
     assert digest.day is None
+    assert (digest.previous_day, digest.next_day) == (None, None)
     assert digest.total == 0
     assert digest.items == []
 
@@ -312,7 +340,19 @@ def test_fake_model_can_be_chosen_with_a_real_mailbox():
     assert isinstance(build_llm_provider(settings), FakeLLMProvider)
 
 
-def test_factory_refuses_the_real_model_until_it_exists():
+def test_factory_builds_the_openrouter_model_when_asked(monkeypatch):
+    # The real client is replaced, so the test needs no network and no key.
+    monkeypatch.setattr("app.factory.build_openrouter_model", lambda settings: object())
+    settings = make_settings(demo_mode=False, llm_provider="openrouter")
+    assert isinstance(build_llm_provider(settings), LangChainLLMProvider)
+
+
+def test_demo_mode_keeps_the_fake_model_even_if_openrouter_is_chosen():
+    settings = make_settings(demo_mode=True, llm_provider="openrouter")
+    assert isinstance(build_llm_provider(settings), FakeLLMProvider)
+
+
+def test_factory_rejects_an_unknown_model_provider():
     settings = make_settings(demo_mode=False, llm_provider="anthropic")
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError, match="LLM_PROVIDER"):
         build_llm_provider(settings)
