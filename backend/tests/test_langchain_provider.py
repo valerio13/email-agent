@@ -8,9 +8,12 @@ from pydantic import ValidationError
 
 from app.domain.models import Category, Email, EmailAnalysis, Priority
 from app.providers.llm.langchain_provider import (
+    SUMMARY_LIMIT,
     SYSTEM_PROMPT,
     LangChainLLMProvider,
+    ModelAnswer,
     build_openrouter_model,
+    shorten,
 )
 from tests.helpers import make_settings
 
@@ -78,6 +81,24 @@ def test_the_answer_may_come_as_a_dict(email):
     assert provider.analyze_email(email) == ANALYSIS
 
 
+def test_a_summary_over_the_limit_is_cut_instead_of_rejected(email):
+    long_summary = "Ana asks for a quote for the whole project. " * 10
+    provider, _ = provider_returning(ANALYSIS.model_dump() | {"summary": long_summary})
+
+    analysis = provider.analyze_email(email)
+
+    assert len(analysis.summary) <= SUMMARY_LIMIT
+    assert analysis.summary.startswith("Ana asks for a quote")
+    assert analysis.summary.endswith("…")
+    assert analysis.draft_reply == ANALYSIS.draft_reply
+
+
+def test_shorten_leaves_short_text_alone_and_cuts_at_a_word():
+    assert shorten("Short.") == "Short."
+    assert shorten("one two three four", limit=12) == "one two…"
+    assert len(shorten("word " * 200)) <= SUMMARY_LIMIT
+
+
 def test_an_invalid_answer_is_not_accepted(email):
     # The email needs a reply but the model gave no draft.
     provider, _ = provider_returning(ANALYSIS.model_dump() | {"draft_reply": None})
@@ -116,7 +137,7 @@ def test_openrouter_model_uses_the_key_the_model_and_a_json_schema(monkeypatch):
     assert chat.kwargs["model"] == "anthropic/claude-sonnet-5.5"
     assert chat.kwargs["api_key"] == "sk-or-test"
     # No tools are given to the model: the schema is the only thing that shapes its answer.
-    assert chat.structured == (EmailAnalysis, {"method": "json_schema"})
+    assert chat.structured == (ModelAnswer, {"method": "json_schema"})
     assert "tools" not in chat.kwargs
 
 
