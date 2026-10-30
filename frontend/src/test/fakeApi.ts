@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import type { Category, Digest, DigestItem, Draft, Metrics } from '../api/client'
+import type { Category, Digest, DigestItem, Draft, Metrics, PipelineResult } from '../api/client'
 
 type Call = { method: string; path: string; body?: unknown }
 
@@ -83,6 +83,10 @@ export class FakeApi {
   items: DigestItem[]
   demoMode: boolean
   offline = false
+  // What a run of the pipeline finds, and an optional gate that holds it until a test opens it.
+  pipelineResult: PipelineResult = { new_emails: 2, analysed: 2 }
+  pipelineGate: Promise<void> | null = null
+  pipelineBusy = false
   calls: Call[] = []
 
   constructor({ items = sampleItems(), demoMode = true } = {}) {
@@ -177,6 +181,13 @@ export class FakeApi {
     if (method === 'GET' && path === '/drafts') return json(this.pending())
     if (method === 'GET' && path === '/metrics') return json(this.metrics())
     if (method === 'GET' && path === '/config') return json({ demo_mode: this.demoMode })
+    if (method === 'POST' && path === '/pipeline/run') {
+      await this.pipelineGate
+      if (this.pipelineBusy) {
+        return json({ detail: 'A run is already in progress. Wait for it to finish.' }, 409)
+      }
+      return json(this.pipelineResult)
+    }
     if (method === 'POST' && (path === '/demo/run' || path === '/demo/reset')) {
       this.items = sampleItems()
       return json({ new_emails: this.items.length, analysed: this.items.length })

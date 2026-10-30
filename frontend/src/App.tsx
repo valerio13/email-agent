@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { useConfig, useDigest } from './api/hooks'
+import { CheckMailButton } from './components/CheckMailButton'
 import { EmptyState } from './components/EmptyState'
 import { Icon } from './components/Icon'
 import { NoticeBar, NoticeProvider } from './components/NoticeProvider'
@@ -41,7 +42,7 @@ export default function App() {
           </div>
           <div className="flex flex-wrap gap-3">
             <ThemeToggle />
-            {config?.demo_mode && <ResetDemoButton />}
+            {config && (config.demo_mode ? <ResetDemoButton /> : <CheckMailButton />)}
           </div>
         </header>
         <main id="content" tabIndex={-1} className="grid gap-7 outline-none">

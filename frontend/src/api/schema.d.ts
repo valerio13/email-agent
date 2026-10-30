@@ -207,6 +207,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pipeline/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Pipeline
+         * @description Fetch the new emails and analyse them. It answers when the run is over, which can take a
+         *     minute with a real model. 409 if another run is still in progress.
+         */
+        post: operations["run_pipeline_api_pipeline_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -653,6 +674,26 @@ export interface operations {
         };
     };
     reset_demo_api_demo_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineResult"];
+                };
+            };
+        };
+    };
+    run_pipeline_api_pipeline_run_post: {
         parameters: {
             query?: never;
             header?: never;

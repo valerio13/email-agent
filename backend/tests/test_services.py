@@ -207,6 +207,22 @@ def test_metrics_are_zero_without_mail(session):
     assert metrics.minutes_saved == 0
 
 
+def test_a_failed_run_does_not_block_the_next_one(session, mail):
+    class BrokenMail(DemoMailProvider):
+        def fetch_new(self):
+            raise RuntimeError("mailbox unavailable")
+
+    ingest = IngestService(session, BrokenMail(now=DEMO_NOW))
+    broken = PipelineService(ingest, AnalysisService(session, FakeLLMProvider()))
+    with pytest.raises(RuntimeError):
+        broken.run()
+
+    working = PipelineService(
+        IngestService(session, mail), AnalysisService(session, FakeLLMProvider())
+    )
+    assert working.run() == PipelineResult(new_emails=36, analysed=36)
+
+
 def test_demo_run_loads_the_emails_once(session, mail):
     service = make_demo_service(session, mail)
     assert service.run() == PipelineResult(new_emails=36, analysed=36)

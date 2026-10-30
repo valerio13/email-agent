@@ -12,6 +12,7 @@ from app.factory import build_services
 from app.main import app
 from app.providers.llm.fake import FakeLLMProvider
 from app.providers.mail.demo import DemoMailProvider
+from app.services import pipeline as pipeline_module
 from tests.helpers import DEMO_NOW, make_settings
 
 
@@ -43,6 +44,29 @@ def test_demo_run_loads_the_emails_once(client):
     first = client.post("/api/demo/run")
     assert first.json() == {"new_emails": 36, "analysed": 36}
     assert client.post("/api/demo/run").json() == {"new_emails": 0, "analysed": 0}
+
+
+def test_pipeline_run_fetches_and_analyses_the_new_mail(client):
+    assert client.post("/api/pipeline/run").json() == {"new_emails": 36, "analysed": 36}
+    assert client.post("/api/pipeline/run").json() == {"new_emails": 0, "analysed": 0}
+    assert client.get("/api/digest").json()["total"] == 8
+
+
+def test_pipeline_run_works_with_a_real_mailbox_too(client):
+    # Unlike the demo endpoints, it is what the dashboard calls when it is not in demo mode.
+    app.dependency_overrides[get_settings] = lambda: make_settings(demo_mode=False)
+    assert client.post("/api/pipeline/run").status_code == 200
+
+
+def test_pipeline_run_refuses_to_overlap_with_another_run(client):
+    assert pipeline_module._run_lock.acquire(blocking=False)
+    try:
+        response = client.post("/api/pipeline/run")
+    finally:
+        pipeline_module._run_lock.release()
+    assert response.status_code == 409
+    assert "already in progress" in response.json()["detail"]
+    assert client.get("/api/digest").json()["total"] == 0
 
 
 @pytest.mark.parametrize("path", ["/api/demo/run", "/api/demo/reset"])

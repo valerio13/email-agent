@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 
-export type NoticeKind = 'success' | 'warn' | 'error'
+export type NoticeKind = 'info' | 'success' | 'warn' | 'error'
 export type Notice = { kind: NoticeKind; text: string }
 
 type NoticeState = {

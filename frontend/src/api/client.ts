@@ -68,6 +68,7 @@ export const api = {
   approveDraft: (id: number) => post<Draft>(`/drafts/${id}/approve`),
   discardDraft: (id: number) => post<Draft>(`/drafts/${id}/discard`),
   restoreDraft: (id: number) => post<Draft>(`/drafts/${id}/restore`),
+  runPipeline: () => post<PipelineResult>('/pipeline/run'),
   runDemo: () => post<PipelineResult>('/demo/run'),
   resetDemo: () => post<PipelineResult>('/demo/reset'),
 }

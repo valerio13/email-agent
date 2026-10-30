@@ -96,6 +96,60 @@ describe('App', () => {
     expect(api.writes()).toEqual(['POST /demo/reset'])
   })
 
+  it('offers Check new mail with a real mailbox and Reset demo in demo mode, never both', async () => {
+    new FakeApi({ demoMode: false }).install()
+    const { unmount } = renderApp(App)
+    expect(await screen.findByRole('button', { name: 'Check new mail' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Reset demo' })).not.toBeInTheDocument()
+    unmount()
+
+    new FakeApi({ demoMode: true }).install()
+    renderApp(App)
+    expect(await screen.findByRole('button', { name: 'Reset demo' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Check new mail' })).not.toBeInTheDocument()
+  })
+
+  it('says that the mail is being fetched, then how many emails came in', async () => {
+    const user = userEvent.setup()
+    const api = new FakeApi({ demoMode: false }).install()
+    let finish = () => {}
+    api.pipelineGate = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+    renderApp(App)
+
+    await user.click(await screen.findByRole('button', { name: 'Check new mail' }))
+    expect(await screen.findByText(/Fetching the new emails and analysing them/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Checking...' })).toBeDisabled()
+
+    finish()
+    expect(await screen.findByText('2 new emails, 2 analysed.')).toBeInTheDocument()
+    expect(screen.queryByText(/Fetching the new emails/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Check new mail' })).toBeEnabled()
+    expect(api.writes()).toEqual(['POST /pipeline/run'])
+  })
+
+  it('says so when there is no new mail', async () => {
+    const user = userEvent.setup()
+    const api = new FakeApi({ demoMode: false }).install()
+    api.pipelineResult = { new_emails: 0, analysed: 0 }
+    renderApp(App)
+
+    await user.click(await screen.findByRole('button', { name: 'Check new mail' }))
+    expect(await screen.findByText('No new emails.')).toBeInTheDocument()
+  })
+
+  it('explains why a run was refused while another one is in progress', async () => {
+    const user = userEvent.setup()
+    const api = new FakeApi({ demoMode: false }).install()
+    api.pipelineBusy = true
+    renderApp(App)
+
+    await user.click(await screen.findByRole('button', { name: 'Check new mail' }))
+    expect(await screen.findByText('A run is already in progress. Wait for it to finish.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Check new mail' })).toBeEnabled()
+  })
+
   it('remembers the chosen theme', async () => {
     const user = userEvent.setup()
     new FakeApi().install()

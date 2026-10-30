@@ -55,7 +55,7 @@ Use a dedicated test account, never your own mailbox.
 2. Create an OAuth client of type Desktop app and put its client id and secret in `.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`).
 3. Run `uv run python -m app.cli authorize-gmail` from `backend/`, sign in, and paste the printed `GOOGLE_REFRESH_TOKEN=...` line into `.env`.
 4. Set `DEMO_MODE=false`. Keep `LLM_PROVIDER=fake` to try the mailbox without a real model, or connect one (next section).
-5. Run `uv run python -m app.cli run-pipeline` to fetch and analyse the mail now. Otherwise the daily run does it.
+5. Click Check new mail in the dashboard to fetch and analyse the mail now (it can take a minute with a real model), or run `uv run python -m app.cli run-pipeline`. Otherwise the daily run does it. Each run reads the inbox mail that `GMAIL_QUERY` matches (by default the last 2 days, at most `GMAIL_MAX_EMAILS`) and skips what is already stored.
 
 The app asks for `gmail.readonly` and `gmail.compose`. Approving a draft creates it in the Gmail account and never sends it. While the Google Cloud app is in Testing, the refresh token expires after 7 days and the step 3 command has to be repeated. Publishing the app (In production, unverified, only for your own account) avoids that.
 

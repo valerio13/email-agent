@@ -31,5 +31,6 @@ export const useEditDraft = () =>
 export const useApproveDraft = () => useAction(api.approveDraft)
 export const useDiscardDraft = () => useAction(api.discardDraft)
 export const useRestoreDraft = () => useAction(api.restoreDraft)
+export const useRunPipeline = () => useAction(api.runPipeline)
 export const useRunDemo = () => useAction(api.runDemo)
 export const useResetDemo = () => useAction(api.resetDemo)

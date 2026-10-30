@@ -109,7 +109,7 @@ Each service takes the database session and its providers through the constructo
 | `DigestService` | `build(day=None)` | Returns a `Digest` of one UTC day of mail (`day`, by default the latest one): its `previous_day` and `next_day` (the closest days with mail, to move between days), total, counts per category, pending drafts (all days) and that day's emails, each with its draft if it has one, highest priority first and newest first within each priority. |
 | `DraftService` | `list_pending()`, `edit()`, `approve()`, `discard()`, `restore()` | `list_pending()` returns the drafts waiting for review of every day, each with its email and analysis, most urgent first. Approving creates the draft in the mailbox first and marks it approved afterwards, so a mailbox failure leaves the database unchanged. A draft that was already approved or discarded cannot be edited, approved or discarded again. A discarded draft can be restored, because nothing reached the mailbox. An approved one cannot: it already exists there. |
 | `MetricsService` | `build()` | Returns `Metrics` for the 7 days that end on the day of the newest email: emails per day, emails processed, drafts created, drafts waiting for review and the estimated time saved (2 minutes per email and 6 per draft, both returned in the response). |
-| `PipelineService` | `run()` | The daily run: ingest, then analysis. Used by the scheduler and by the demo service. |
+| `PipelineService` | `run()` | The run: ingest, then analysis. Used by the scheduler, the demo service and `POST /api/pipeline/run`. Only one run at a time: a second one raises `PipelineBusyError` (409), because the daily job and a click could otherwise analyse the same emails. The lock is in memory, so it needs the single worker that the scheduler already requires. |
 | `DemoService` | `run()`, `reset()` | Demo mode only. `run()` runs the pipeline, but first starts over if the mailbox now offers mail from a later day than the stored one, so the dashboard always shows current dates. `reset()` deletes every email, analysis and draft and loads the demo emails again. |
 
 `app/factory.py` is the only place that chooses an implementation for each interface. In demo mode it builds the demo mailbox and the fake model. Outside it, it builds the Gmail mailbox, and the model is the fake one with `LLM_PROVIDER=fake` (a real mailbox can be tried for free) or the OpenRouter one with `LLM_PROVIDER=openrouter`. Any other value is an error. `build_services(session, mail, llm)` assembles the services on one session.
@@ -128,6 +128,7 @@ FastAPI application in `app/main.py`. Routers live in `app/api/` and are mounted
 | `POST /api/drafts/{id}/discard` | Discard a pending draft |
 | `POST /api/drafts/{id}/restore` | Undo a discard: the draft waits for review again, with its text. Approved drafts cannot be restored (409) |
 | `GET /api/config` | Whether the app runs in demo mode, so the dashboard shows its demo buttons only then |
+| `POST /api/pipeline/run` | Fetch and analyse the new mail now. It answers when the run is over, which can take a minute with a real model. 409 if another run is in progress |
 | `POST /api/demo/run` | Run the pipeline on demand, reloading the demo emails if they are from an earlier day. Demo mode only (403 otherwise) |
 | `POST /api/demo/reset` | Delete all data and load the demo emails again. Demo mode only (403 otherwise) |
 
@@ -169,7 +170,7 @@ The Metrics view shows the last seven days: four figures (emails processed, draf
 
 Keyboard and screen readers: the tabs follow the WAI-ARIA pattern (only the selected tab is in the tab order, arrow keys, Home and End move between tabs, each tab names the panel it controls), a skip link jumps to the main content, every card that is a landmark has a unique name, the chart and the mix bar have a text description, and the transitions stop when the system asks for reduced motion.
 
-The demo buttons (Reset demo in the header, Load demo emails when there is no data) appear only when `GET /api/config` says the app runs in demo mode. Outside it they would get a 403.
+The demo buttons (Reset demo in the header, Load demo emails when there is no data) appear only when `GET /api/config` says the app runs in demo mode. Outside it they would get a 403. In that case the header shows Check new mail instead, which calls `POST /api/pipeline/run`: while it works an info notice (the only kind that does not disappear by itself) says the emails are being fetched and analysed, and it is replaced by the result ("2 new emails, 2 analysed.", "No new emails.") or by the error.
 
 `src/api/schema.d.ts` is generated from the API's OpenAPI description. With the API running, `npm run gen:api` regenerates it, and `tsc` then reports any place where the frontend no longer matches the backend. The generated file is committed, so building does not need the API.
 
