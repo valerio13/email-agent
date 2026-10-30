@@ -4,8 +4,8 @@ Reads new mail every day, writes a prioritized summary (urgent, needs a reply, i
 
 Status: work in progress.
 
-- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory, the REST API, the daily scheduler, the dashboard, the Gmail provider and the LangChain model provider (through OpenRouter).
-- Next: a complete Docker Compose setup.
+- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory, the REST API, the daily scheduler, the dashboard, the Gmail provider, the LangChain model provider (through OpenRouter) and the Docker image with its Compose setup.
+- Next: a public demo, screenshots and a video.
 
 ## Architecture
 
@@ -42,6 +42,19 @@ cd ../backend && uv run fastapi run   # dashboard and API at http://127.0.0.1:80
 ```
 
 Frontend checks: `npm run lint`, `npm run build` (type-checks the app and its tests) and `npm test`.
+
+## Run with Docker
+
+Needs only Docker. One image holds the API and the compiled dashboard, and the stack starts PostgreSQL next to it:
+
+```bash
+cp .env.example .env   # fill in POSTGRES_USER, POSTGRES_PASSWORD (no special characters) and POSTGRES_DB
+docker compose up -d --build   # dashboard and API at http://127.0.0.1:8000
+```
+
+The app creates its tables when it starts, and it starts in demo mode unless `.env` sets `DEMO_MODE=false`. Compose builds the database URL itself, so the `DATABASE_URL` line of `.env` is only for running outside Docker.
+
+`docker-compose.override.yml`, which `docker compose up` loads by itself, publishes the ports on 127.0.0.1 only. On a server, start the stack with `docker compose -f docker-compose.yml up -d --build` so that nothing is published, and have a reverse proxy send a domain to port 8000 of the `app` service. The app has no login: on a public server keep `DEMO_MODE=true`, so that nobody can reach a real mailbox through it.
 
 ## Demo mode
 

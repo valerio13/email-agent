@@ -182,6 +182,16 @@ The tests run in jsdom with Testing Library. `src/test/fakeApi.ts` is a small st
 
 In production the API serves the built dashboard (`frontend/dist`) at `/`, so one process and one port serve both (`serve_frontend` in `app/main.py`, built on FastAPI's `app.frontend`). API routes win over the files, and an unknown `/api` path still answers a JSON 404. If `frontend/dist` does not exist, as in development or in the backend tests, only the API runs and the dashboard comes from the Vite server.
 
+## Docker
+
+One `Dockerfile` builds the whole app in two stages: Node compiles the dashboard (`npm run build`, which also type-checks it), and a `python:3.12-slim` stage installs the backend with `uv sync --frozen --no-dev` and copies the compiled dashboard next to it. The image keeps the repository layout (`/app/backend`, `/app/frontend/dist`, `/app/demo`) because the code finds the dashboard and the demo emails by relative path. It runs as a non-root user and has a health check on `GET /api/config`. It starts with `alembic upgrade head` and then one `fastapi run` worker, since the scheduler and the on-demand run lock live in the memory of the process.
+
+`.dockerignore` keeps `.env`, `.git`, `node_modules` and the tests out of the build context, so no secret can end up in the image.
+
+`docker-compose.yml` starts PostgreSQL (data in the `pgdata` volume) and the app, which waits for the database to be healthy. It publishes no port, so it can run on a shared server behind a reverse proxy. It builds `DATABASE_URL` itself from the `POSTGRES_*` variables, and every other setting has a default that gives demo mode with the fake model, so a deployment needs no credentials. `docker-compose.override.yml` is loaded automatically by `docker compose up` and publishes the app (8000) and the database (5432) on 127.0.0.1 only, for local use; on a server, `-f docker-compose.yml` leaves it out.
+
+The CI has a `docker` job that runs `docker compose up --build --wait` and then checks that the dashboard is served and that `POST /api/demo/run` loads the 36 demo emails, so a broken Dockerfile, migration or health check fails the build.
+
 ## Scheduler
 
 `app/scheduler.py` registers one APScheduler job, `daily-pipeline`, that runs `PipelineService` (ingest, then analysis) every day. The scheduler runs in a background thread of the API process: `app/main.py` starts it on startup and stops it on shutdown. The job opens its own database session because there is no HTTP request.

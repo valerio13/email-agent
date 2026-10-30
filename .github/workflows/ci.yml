@@ -51,3 +51,22 @@ jobs:
       - run: uv run ruff format --check .
       # The tests use an in-memory database and the demo providers: no .env or services needed.
       - run: uv run pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_USER: ci
+      POSTGRES_PASSWORD: ci-password
+      POSTGRES_DB: ci
+    steps:
+      - uses: actions/checkout@v4
+      # Builds the image and starts the stack in demo mode. --wait returns when the health checks
+      # pass, which also means the migrations ran against a real PostgreSQL.
+      - run: docker compose up -d --build --wait --wait-timeout 180
+      - name: The dashboard and the API answer
+        run: |
+          curl -fsS http://127.0.0.1:8000/ | grep -q '<div id="root">'
+          curl -fsS -X POST http://127.0.0.1:8000/api/demo/run | grep -q '"new_emails":36'
+      - name: Show the logs if it failed
+        if: failure()
+        run: docker compose logs

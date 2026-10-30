@@ -1,0 +1,10 @@
+# Local use only. `docker compose up` loads this file by itself, to reach the services from the
+# machine: the dashboard and API at http://127.0.0.1:8000 and the database at 127.0.0.1:5432
+# (for running the backend with uv). On a server, start the stack with -f docker-compose.yml only.
+services:
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"
+  app:
+    ports:
+      - "127.0.0.1:8000:8000"

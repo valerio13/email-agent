@@ -1,12 +1,14 @@
+# The whole stack: PostgreSQL and the app (API plus dashboard).
+# Nothing is published to the host here, so it can run on a shared server behind a reverse proxy
+# that sends a domain to port 8000 of the app. docker-compose.override.yml adds the local ports.
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -14,6 +16,31 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Inside the network the database is called db. Use a password without special characters.
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # Demo mode is the default, so a fresh deployment needs no credentials at all.
+      DEMO_MODE: ${DEMO_MODE:-true}
+      LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+      LLM_MODEL: ${LLM_MODEL:-anthropic/claude-haiku-5.5}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:-}
+      GMAIL_QUERY: ${GMAIL_QUERY:-in:inbox newer_than:2d}
+      GMAIL_MAX_EMAILS: ${GMAIL_MAX_EMAILS:-50}
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
+      SCHEDULE_TIME: ${SCHEDULE_TIME:-07:00}
+      SCHEDULE_TIMEZONE: ${SCHEDULE_TIMEZONE:-UTC}
+    expose:
+      - "8000"
 
 volumes:
   pgdata:
