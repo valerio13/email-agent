@@ -47,6 +47,15 @@ const ICONS = {
       <path d="M18.5 15.5c.3 1.6.9 2.2 2.5 2.5-1.6.3-2.2.9-2.5 2.5-.3-1.6-.9-2.2-2.5-2.5 1.6-.3 2.2-.9 2.5-2.5z" />
     </>
   ),
+  // Lucide "bot" (ISC license, https://lucide.dev/icons/bot) with a smile added.
+  robot: (
+    <>
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2M20 14h2M15 12.5v1.5M9 12.5v1.5" />
+      <path d="M9.6 16.6q2.4 1.9 4.8 0" />
+    </>
+  ),
   undo: (
     <>
       <path d="M9 14 4 9l5-5" />

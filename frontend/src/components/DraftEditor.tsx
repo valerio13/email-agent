@@ -84,7 +84,7 @@ export function DraftEditor({
           <Icon name="check" />
           Approve and create draft
         </Button>
-        <Button onClick={discardDraft} disabled={locked || busy}>
+        <Button variant="danger" onClick={discardDraft} disabled={locked || busy}>
           <Icon name="x" />
           Discard
         </Button>

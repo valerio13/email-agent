@@ -18,8 +18,12 @@
   --on-amber: #4a3900;
   --rose: #f2a6a6;
   --on-rose: #581414;
-  --ai: #d6cff7;
-  --on-ai: #2b2060;
+  --ai: #f7c79e;
+  --on-ai: #5a2a05;
+  --ai-ink: #8a3d05;
+  --ai-wash: rgba(240, 130, 40, 0.18);
+  --ai-line: rgba(224, 108, 18, 0.85);
+  --ai-glow: rgba(240, 130, 40, 0.4);
   --sh-lt: rgba(255, 255, 255, 1);
   --sh-dk: rgba(126, 126, 120, 0.26);
   /* Relief: light comes from the top right. A bright rim on that side, a dark crisp edge on the
@@ -50,8 +54,12 @@
     --on-amber: #2b2100;
     --rose: #dc8686;
     --on-rose: #2b0a0a;
-    --ai: #9d93e0;
-    --on-ai: #17113a;
+    --ai: #e89a5c;
+    --on-ai: #2b1200;
+    --ai-ink: #f7c79e;
+    --ai-wash: rgba(232, 154, 92, 0.2);
+    --ai-line: rgba(232, 154, 92, 0.85);
+    --ai-glow: rgba(232, 154, 92, 0.4);
     --sh-lt: rgba(255, 255, 255, 0.05);
     --sh-dk: rgba(0, 0, 0, 0.6);
     --hi: rgba(255, 255, 255, 0.16);
@@ -76,8 +84,12 @@
   --on-amber: #2b2100;
   --rose: #dc8686;
   --on-rose: #2b0a0a;
-  --ai: #9d93e0;
-  --on-ai: #17113a;
+  --ai: #e89a5c;
+  --on-ai: #2b1200;
+  --ai-ink: #f7c79e;
+  --ai-wash: rgba(232, 154, 92, 0.2);
+  --ai-line: rgba(232, 154, 92, 0.85);
+  --ai-glow: rgba(232, 154, 92, 0.4);
   --sh-lt: rgba(255, 255, 255, 0.05);
   --sh-dk: rgba(0, 0, 0, 0.6);
   --hi: rgba(255, 255, 255, 0.16);
@@ -103,6 +115,7 @@
   --color-on-rose: var(--on-rose);
   --color-ai: var(--ai);
   --color-on-ai: var(--on-ai);
+  --color-ai-ink: var(--ai-ink);
   --color-ring: var(--ring);
   --color-glow: var(--glow);
   --shadow-raise-1: var(--raise-1);

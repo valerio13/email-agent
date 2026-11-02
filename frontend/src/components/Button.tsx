@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react'
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'default' | 'primary'
+  variant?: 'default' | 'primary' | 'danger'
 }
 
 const BASE =
@@ -9,6 +9,8 @@ const BASE =
 
 const VARIANTS = {
   default: 'bg-bg text-fg enabled:hover:shadow-raise-2',
+  // The same rose as the Urgent chip.
+  danger: 'bg-rose text-on-rose enabled:hover:shadow-raise-2',
   primary: 'bg-mint text-on-mint enabled:hover:shadow-[var(--raise-2),0_0_22px_var(--glow)]',
 }
 

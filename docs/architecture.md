@@ -156,7 +156,7 @@ src/
   styles/      tokens.css
 ```
 
-The Overview view holds the state (filter, search, selected email) and reads the digest. It shows the summary tiles, which double as filters, two arrows beside the date to move to the previous or next day with mail, the inbox by priority and, beside it, two separate cards for the selected email: the email as it arrived, and the AI analysis with a purple mark so the reader always knows what the model produced. A day with no analysed emails, a loading digest and a failed request each get their own state.
+The Overview view holds the state (filter, search, selected email) and reads the digest. It shows the summary tiles, which double as filters, two arrows beside the date to move to the previous or next day with mail, the inbox by priority and, beside it, two separate cards for the selected email: the email as it arrived, and the AI analysis, which stands out with an orange wash, ring and glow, an "AI generated" badge with a sparkle and a robot icon, so the reader always knows what the model produced. A day with no analysed emails, a loading digest and a failed request each get their own state.
 
 The Drafts view is the human review. It lists every pending draft, of any day, next to the email it answers, with the same AI card and editor as the Overview, and below them the drafts already decided. In both places the reviewer edits the text, approves or discards:
 

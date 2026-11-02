@@ -61,3 +61,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* The AI analysis card. An orange wash, ring and glow set it apart from the email card, so it is
+   clear at a glance that everything inside was written by the model. Kept outside the Tailwind
+   layers on purpose: it has to win over the plain card's background and shadow. */
+.ai-surface {
+  background: linear-gradient(var(--ai-wash), var(--ai-wash)), var(--bg);
+  box-shadow:
+    var(--raise-2),
+    0 0 0 2px var(--ai-line),
+    0 0 30px var(--ai-glow);
+}
