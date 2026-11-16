@@ -2,10 +2,10 @@
 
 Reads new mail every day, writes a prioritized summary (urgent, needs a reply, informational) and prepares reply drafts. A human reviews and approves every draft in a dashboard. The agent never sends email.
 
-Status: work in progress.
+Status: complete, working end to end in both demo mode and with a real Gmail mailbox.
 
-- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory, the REST API, the daily scheduler, the dashboard, the Gmail provider, the LangChain model provider (through OpenRouter) and the Docker image with its Compose setup.
-- Next: a public demo, screenshots and a video.
+- Done: settings, domain models, persistence (PostgreSQL, Alembic migrations, repositories), provider interfaces with demo and fake implementations, services, the factory, the REST API, the daily scheduler, the dashboard (reviewed, tested, accessible), the Gmail provider, the LangChain model provider (through OpenRouter) and the Docker image with its Compose setup.
+- Next: the app has no login, so it is not deployed publicly. Adding authentication would be the next step to do so.
 
 ## Architecture
 
